@@ -1,33 +1,58 @@
-<div *ngFor = "let biosource of graph_list_names_bio; let i_bio = index" [attr.data-index]="i_bio">
-  <mat-card>
-      <mat-card-header>
-          <mat-card-title>
-              {{biosource}}
-          </mat-card-title>
-      </mat-card-header>
-  <div *ngFor = "let tf of graph_list_names_tf; let a = index" [attr.data-index]="a">
-      <mat-card>
-      <mat-card-header>
-          <mat-card-title>
-              {{tf}}
-          </mat-card-title>
-      </mat-card-header>
-      <!--<div fxLayout="row wrap">-->
-     <!--<div *ngFor = "let graph of graph_list; let i = index" [attr.data-index]="i">-->
-          
-      <mat-card >
-              <plotly-plot
-              [data]="graph_list[i_bio][a][0].data"
-              [layout]="graph_list[i_bio][a][0].layout"
-              [useResizeHandler]="true"
-              [updateOnlyWithRevision]="true"></plotly-plot>
-                
-      </mat-card>
-      <!--</div>-->
-     <!--</div>-->
-  </mat-card>
-  </div>
-</mat-card>
+<div *ngFor="let biosource of graph_list_names_bio; let i_bio = index" [attr.data-index]="i_bio">
+    <mat-card class="outer-card">
+        <mat-card-header>
+            <mat-card-title>
+                {{biosource}}
+            </mat-card-title>
+        </mat-card-header>
+        <div *ngFor="let tf of graph_list_names_tf; let a = index" [attr.data-index]="a">
+            <mat-card class="inner-card">
+                <mat-card-header>
+                    <mat-card-title>
+                        {{tf}}
+                    </mat-card-title>
+                </mat-card-header>
+                <!--<div fxLayout="row wrap">-->
+                <!--<div *ngFor = "let graph of graph_list; let i = index" [attr.data-index]="i">-->
+                <div fxLayout="row wrap">
+                <mat-card  class="tripple-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            3D Contour Plot
+                        </mat-card-title>
+                    </mat-card-header>
+                    <img class="img-border" src="assets/img/plots/{{tf}}/Contour_{{tf}}.svg" width="550" title="3D Contout Plot">
+                </mat-card>
+
+                <mat-card class="tripple-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            Density Scatter with Heatmap
+                        </mat-card-title>
+                    </mat-card-header>
+                <plotly-plot
+                    [data]="graph_list[i_bio][a][0].data" 
+                    [layout]="graph_list[i_bio][a][0].layout"
+                    [useResizeHandler]="true" 
+                    [updateOnlyWithRevision]="true"></plotly-plot>
+                </mat-card>
+                <mat-card class="table-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            Table with Means and Weights of the individual components
+                        </mat-card-title>
+                    </mat-card-header>
+                <plotly-plot
+                    [data]="graph_list[i_bio][a][1].data" 
+                    
+                ></plotly-plot>
+                </mat-card>
+                </div>
+                <!--</div>-->
+                <!--</div>-->
+            </mat-card>
+        </div>
+    </mat-card>
 </div>
 
 
