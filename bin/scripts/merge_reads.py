@@ -27,8 +27,8 @@ by Kristina Müller (kmlr81)
 """
 
 import os
-import csv
 import pandas as pd
+import logging
 
 
 def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
@@ -133,13 +133,14 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
 
     # Concat rows to a tmp data frame and then append that to the linkage
     # table .csv
-    tmp_frame = rows[0]
+    if len(rows) > 0:
+        tmp_frame = rows[0]
 
-    for n in range(1, len(rows)):
-        tmp_frame = pd.concat([tmp_frame, rows[n]])
+        for n in range(1, len(rows)):
+            tmp_frame = pd.concat([tmp_frame, rows[n]])
 
-    tmp_frame.to_csv(linkage_table_path, sep=';', index=False, header=False,
-                     mode='a')
+        tmp_frame.to_csv(linkage_table_path, sep=';', index=False, header=False,
+                         mode='a')
 
 
 def read_linkage_table(linkage_table_path):
