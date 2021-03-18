@@ -103,7 +103,7 @@ def read_bed(file):
 
         try:
             peak = row['PEAK']
-        except ValueError:
+        except KeyError:
             peak = int((end - start) / 2)
 
         # tests if a chromosome is already a key in the dictionary
