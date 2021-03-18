@@ -74,7 +74,7 @@ def parse(data_path):
             atac_chr_dict= defaultdict(dict)
             for f in os.listdir(os.path.join(data_path, genome, biosource, 'atac-seq')):
                 if f.lower().endswith(('.bigwig', '.bigWig', '.bw')):
-                    chr = f.split('.')[1]
+                    chr = f.split('.')[-2]
                     atac_chr_dict[chr][f]=os.stat(os.path.join(data_path, genome, biosource, 'atac-seq',f)).st_size
 
             atac={}
