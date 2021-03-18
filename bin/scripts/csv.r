@@ -8,15 +8,15 @@ parser <- ArgumentParser()
 
 parser$add_argument("-g", "--genome", type="character", default="hg19",
                     help="Genome to search Deepblue database with [default: \"%(default)s\"]")
-parser$add_argument("-c", "--chromosomes", nargs="+", type="character", default=NULL,
+parser$add_argument("-c", "--chromosomes", nargs="+", type="character", default="all",
                     help="(List of) chromosomes to include (requires chr prefix) [default: all]")
-parser$add_argument("-b", "--biosources", nargs="+", type="character", default=NULL,
+parser$add_argument("-b", "--biosources", nargs="+", type="character", default="all",
                     help="(List of) biosources to include [default: all] (Refer to: https://deepblue.mpi-inf.mpg.de/)")
 parser$add_argument("-t", "--type", nargs="+", type="character", default="peaks", choices=c("peaks","signal"),
                     help="Experiment file types allowed for CHiP-Seq data [default: \"%(default)s\"]")
 parser$add_argument("-a", "--atactype", nargs="+", type="character", default="signal", choices=c("peaks","signal"),
                     help="Experiment file types allowed for ATAC/DNAse-Seq data [default: \"%(default)s\"]")
-parser$add_argument("-m", "--marks", nargs="+", type="character", default=NULL,
+parser$add_argument("-m", "--marks", nargs="+", type="character", default="all",
                     help="(List of) epigenetic marks (i.e. transcription factors) to include [default: all] (Refer to: https://deepblue.mpi-inf.mpg.de/)")
 parser$add_argument("-d", "--directory", type="character", default=".",
                     help="Output directory for CSV file. If an output filename (-o) containing \"/\" characters is provided, the filename will be used instead. [default: \"%(default)s\"]")
@@ -105,20 +105,22 @@ create_linking_table <- function(genome,chroms,filter_biosources,chip_type,atac_
   }
   
   all_chroms <- deepblue_chromosomes(genome = genome)
-  if(!is.null(chroms)) {
+  if(chroms[1] != "all") {
     chrs <- verify_filters(chroms,all_chroms$id,"chromosomes")
   } else {
-    chrs <- all_chroms
+    chrs <- all_chroms$id
   }
   
-  if(!is.null(filter_biosources)) {
+  if(filter_biosources[1] != "all") {
     all_biosources <- deepblue_list_biosources()$name
     filter_biosources <- verify_filters(filter_biosources,all_biosources,"biosources")
+  } else {
+    filter_biosources <- NULL
   }
   
   tf_marks <- deepblue_list_epigenetic_marks(extra_metadata = list(category="Transcription Factor Binding Sites"))$name
   
-  if(!is.null(chip_marks)) {
+  if(chip_marks[1] != "all") {
     chip_marks <- verify_filters(chip_marks,tf_marks,"epigenetic marks")
   } else {
     chip_marks <- tf_marks
