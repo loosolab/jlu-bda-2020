@@ -34,7 +34,7 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, redo_analysis):
         # generate key for biosource if it does not exist
         if biosource not in calculateddict:
             calculateddict[biosource] = {}
-
+        
         for tf in chipdict:
 
             # test if result for biosource-tf already exists
@@ -77,17 +77,17 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, redo_analysis):
                                         peaklocation = start + peak
                                         peaklocationstart = peaklocation - w
                                         peaklocationend = peaklocation + w
-                                        calculationls = []
 
                                         # call scores between start and end from atac and chip using pyBigWig
                                         if chromosom in chip.chroms() and chromosom in atac.chroms():
-                                            calculationls.append(peaklocationstart)
-                                            calculationls.append(peaklocationend)
                                             chip_score = chip.intervals(chromosom, peaklocationstart, peaklocationend)
                                             atac_score = atac.intervals(chromosom, peaklocationstart, peaklocationend)
 
                                             # calculate mean of chip and atac scores
                                             if atac_score:
+                                                calculationls = []
+                                                calculationls.append(peaklocationstart)
+                                                calculationls.append(peaklocationend)
                                                 for i in (chip_score, atac_score):
                                                     calculationls.append(calculate_mean(i, peaklocationstart, peaklocationend))
                                             calculateddict[biosource][tf][chromosom].append(calculationls)
@@ -96,12 +96,18 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, redo_analysis):
 
                     print(tf, " done")
 
-            # remove key if the value is empty
-            if calculateddict[biosource]:
-                pass
-            else:
-                del calculateddict[biosource]
+                    # remove key if the value is empty
+                    if calculateddict[biosource][tf]:
+                        pass
+                    else:
+                        del calculateddict[biosource][tf]
 
+        # remove key if the value is empty
+        if calculateddict[biosource]:
+            pass
+        else:
+            del calculateddict[biosource]
+    
     return calculateddict, exist
 
 def calculate_mean(i,peaklocationstart, peaklocationend):
