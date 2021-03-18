@@ -241,6 +241,10 @@ def is_big_wig(file_path):
     """
     try:
         file_ext = os.path.splitext(file_path)[1].lower()
+        if file_ext == '.ln':
+            file_path_stripped = os.path.splitext(file_path)[0]
+            file_ext = os.path.splitext(file_path_stripped)[1].lower()
+            
         if file_ext == '.bw' or file_ext == '.bigwig':
             bw = pyBigWig.open(file_path)
             is_bw = bw.isBigWig()
