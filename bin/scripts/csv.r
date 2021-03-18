@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 required_packages <- c("BiocManager","data.table","argparse")
-install.packages(setdiff(required_packages,rownames(installed.packages())),repos="http://cran.us.r-project.org")
+not_installed <- setdiff(required_packages,rownames(installed.packages()))
+if(length(not_installed) > 0) install.packages(not_installed,repos="http://cran.us.r-project.org")
 if(!"DeepBlueR" %in% installed.packages()) BiocManager::install("DeepBlueR")
 library(argparse)
 
