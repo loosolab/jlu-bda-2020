@@ -18,16 +18,134 @@ args <- parser$parse_args()
 
 library(DeepBlueR)
 
-# export_from_csv()
-# Requires csv filename and output directory (with default values)
-# Downloads all files listed in the csv that do not exist in the output dir yet
+# export_from_csv(csv filename, output directory, chunk size)
+# Handles the entire download process, starting with the creation of a file
+# queue which it iterates through. For ATAC files, each experiment is divided
+# into chunks to prevent memory errors. If files that have not been downloaded
+# remain, the function will call download_regions() for each file (and chunk) to
+# request the corresponding regions from the Deepblue server.
 
 export_from_csv <- function(csv_file,out_dir,chunk_size) {
   
-  failed_warning <- function(filename,request_id,message) {
+  failed_warning <- function(filename,request_id,msg) {
     warning(paste(
-      filename,": download with request id",request_id,"failed:",message
+      filename,": download with request id",request_id,"failed:",msg
     ))
+  }
+  
+  # download_regions(experiment id, filename, chromosome, format, chunk start, output directory)
+  # Attempts to download a single file from the Deepblue database. The expected
+  # number of regions is requested beforehand to check for mismatches later. If
+  # 0 is returned, the function assumes that no data is available for this range
+  # (or chromosome) and skips to the next file. The download is considered
+  # successful only if the region count matches the downloaded data and the file
+  # has been exported to its expected location. In this case TRUE is returned
+  # and export_to_csv() will export the metadata of the current experiment.
+  
+  download_regions <- function(id,filename,chr,format,chunk,out_dir) {
+    
+    regions_length <- 0
+    message(filename)
+    
+    query_id <- deepblue_select_experiments(experiment_name = id, chromosome = chr, start = chunk, end = chunk + chunk_size)
+    message(paste("query id:",query_id))
+    
+    # for ATAC/DNAse-seq files (chunk > 0), filter out regions with the value 0
+    
+    if(chunk > 0) {
+      query_id <- deepblue_filter_regions(query_id = query_id, field = "VALUE", operation = "!=", value = "0", type = "number")
+      message(paste("filtered query id:",query_id))
+    }
+    
+    count_request <- deepblue_count_regions(query_id)
+    expected_regions <- as.integer(deepblue_download_request_data(count_request))
+    
+    if(expected_regions == 0) {
+      
+      # this is not considered an error
+      warning(paste("No regions available for",filename,"(skipping) query_id:",query_id))
+      
+      # output_file <- paste(out_dir,"/",filename,".txt",sep="")
+      # return(file.create(output_file)) # returns TRUE if file could be created
+      return(TRUE)
+      
+    }
+    
+    request_id <- deepblue_get_regions(query_id = query_id, output_format = format)
+    message(paste("request id:",request_id))
+    
+    req_status <- deepblue_info(request_id)$state
+    
+    if(req_status != "removed") {
+      
+      regions <- try(deepblue_download_request_data(request_id,do_not_cache=TRUE))
+      
+      if(class(regions) != "GRanges") {
+        
+        if(class(regions) == "try-error") {
+          
+          err_msg <- regions[1]
+          
+        } else {
+          
+          err_msg <- paste("received",class(regions),"class object when calling deepblue_download_request_data")
+          
+        }
+        
+        failed_warning(filename,request_id,err_msg)
+        return(FALSE)
+        
+      } else {
+        
+        regions_length <- length(regions)
+        
+        if(regions_length > 0) {
+          
+          if(regions_length != expected_regions) {
+            
+            err_msg <- paste("regions mismatch:",expected_regions,"regions expected,",regions_length,"downloaded")
+            failed_warning(filename,request_id,err_msg)
+            return(FALSE)
+            
+          } else {
+            
+            message(paste("regions:",regions_length))
+            output_file <- paste(out_dir,"/",filename,".txt",sep="")
+            
+            deepblue_export_tab(regions,target.directory = out_dir,file.name = filename)
+            
+            if(!file.exists(output_file)) {
+              
+              err_msg <- paste("file was downloaded but not exported. regions had length",regions_length)
+              failed_warning(filename,request_id,err_msg)
+              return(FALSE)
+              
+            } else {
+              
+              # the download was successful
+              message("done")
+              return(TRUE)
+              
+            }
+            
+          }
+          
+        } else {
+          
+          failed_warning(filename,request_id,"returned empty file, expected",expected_regions,"regions")
+          return(FALSE)
+          
+        }
+        
+      }
+      
+    } else {
+
+      failed_warning(filename,request_id,paste("request status was:",req_status))
+      return(FALSE)
+      
+    }
+    
   }
   
   if(!dir.exists(out_dir)) {
@@ -35,7 +153,6 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
   }
   
   # This section creates a queue of files that need to be downloaded.
-  # It starts as the filename column from the csv,
   
   data <- fread(
     file=csv_file,
@@ -44,15 +161,14 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
     select=c("experiment_id","filename","format","technique","genome")
   )
   
-  # but the script checks whether there are files that have already been
+  # The script checks whether there are files that have already been
   # downloaded in the output folder. Is this the case, then they are
-  # subtracted from the queue.
+  # removed from the queue.
+  # An existing [filename].meta.txt file is considered a flag for a
+  # successfully downloaded file.
   
-  all_files <- dir(path=out_dir)
   meta_files <- dir(path=out_dir, pattern="meta.txt")
-  downloaded_files <- all_files[!all_files %in% meta_files]
-  downloaded_files <- gsub(".txt","",downloaded_files)
-  
+  downloaded_files <- gsub(".meta.txt","",meta_files)
   queued_files <- data[!data$filename %in% downloaded_files]
   
   if(nrow(queued_files) > 0) {
@@ -76,180 +192,44 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
       id <- row$experiment_id
       
       if(row$technique == "chip-seq") {
-        message(filename)
         
-        query_id <- deepblue_select_experiments(experiment_name = id, chromosome = chr)
-        message(paste("query id:",query_id))
-        
-        request_id <- deepblue_get_regions(query_id = query_id, output_format = row$format) # output_format required
-        message(paste("request id:",request_id))
-        
-        req_status <- deepblue_info(request_id)$state
-        
-        if(req_status == "done") {
-          
-          # NEW: download data as character vector
-          regions <- try(deepblue_download_request_data(request_id,do_not_cache=TRUE))
-          
-          if(class(regions) != "GRanges") {
-            
-            if(class(regions) == "try-error") {
-              
-              err_msg <- regions[1]
-              
-            } else {
-              
-              err_msg <- paste("received",class(regions),"class object when calling deepblue_download_request_data")
-              
-            }
-            
-            failed_warning(filename,request_id,err_msg)
-            
-          } else {
-            
-            output_length <- length(regions)
-            output_file <- paste(out_dir,"/",filename,".txt",sep="")
-            
-            if(output_length > 0) {
-              
-              message(paste("regions:",output_length))
-              
-              deepblue_export_tab(regions,target.directory = out_dir,file.name = filename)
-              
-              if(file.exists(output_file)) {
-                
-                deepblue_export_meta_data(id,target.directory = out_dir,file.name = filename)
-                failed_rows[i,] <- NA
-                
-              } else {
-                
-                err_msg <- paste("file was downloaded but not exported. data had length",output_length)
-                failed_warning(filename,request_id,err_msg)
-                
-              }
-              
-            } else {
-              
-              failed_warning(filename,request_id,"returned empty file")
-              
-            }
-            
-          }
-          
-        } else {
-          
-          failed_warning(filename,request_id,paste("request status was:",req_status))
-          
-        }
+        no_errors <- download_regions(id,filename,chr,row$format,0,out_dir)
         
       } else {
         
-        no_errors <- TRUE
         genom <- row$genome
         this_chrom_size <- chrom_sizes[[genom]][chrom_sizes[[genom]]$id == chr]$name
         chunks <- seq(1,this_chrom_size,by=chunk_size)
         
         for(chunk in chunks) {
           
-          output_length <- 0
-          
           chunked_filename <- paste(filename,"chunk",chunk,sep="_")
-          message(chunked_filename)
-          
-          query_id <- deepblue_select_experiments(experiment_name = id, chromosome = chr, start = chunk, end = chunk + chunk_size)
-          message(paste("query id:",query_id))
-          
-          filtered_query_id <- deepblue_filter_regions(query_id = query_id, field = "VALUE", operation = ">", value = "0", type = "number")
-          message(paste("filtered query id:",filtered_query_id))
-          
-          request_id <- deepblue_get_regions(query_id = filtered_query_id, output_format = row$format)
-          message(paste("request id:",request_id))
-          
-          req_status <- deepblue_info(request_id)$state
-          
-          if(req_status == "done") {
-            
-            regions <- try(deepblue_download_request_data(request_id,do_not_cache=TRUE))
-            
-            if(class(regions) != "GRanges") {
-              
-              no_errors <- FALSE
-              
-              if(class(regions) == "try-error") {
-                
-                err_msg <- regions[1]
-                
-              } else {
-                
-                err_msg <- paste("received",class(regions),"class object when calling deepblue_download_request_data")
-                
-              }
-              
-              failed_warning(chunked_filename,request_id,err_msg)
-              
-            } else {
-              
-              output_length <- length(regions)
-              
-              if(output_length > 0) {
-                
-                message(paste("regions:",output_length))
-                output_file <- paste(out_dir,"/",chunked_filename,".txt",sep="")
-                
-                deepblue_export_tab(regions,target.directory = out_dir,file.name = chunked_filename)
-                
-                if(!file.exists(output_file)) {
-                  
-                  no_errors <- FALSE
-                  err_msg <- paste("file was downloaded but not exported. data had length",output_length)
-                  failed_warning(chunked_filename,request_id,err_msg)
-                  
-                }
-                
-              } else {
-                
-                failed_warning(chunked_filename,request_id,"returned empty file")
-                
-              }
-              
-            }
-            
-          } else {
-            
-            no_errors <- FALSE
-            failed_warning(chunked_filename,request_id,paste("request status was:",req_status))
-            
-          }
+          no_errors <- download_regions(id,chunked_filename,chr,row$format,chunk,out_dir)
+          if(!no_errors) break
           
         }
-        
-        if(no_errors) {
-          failed_rows[i,] <- NA
-          deepblue_export_meta_data(id,target.directory=out_dir,file.name=filename)
-        }
-        
+      }
+      
+      if(no_errors) {
+        failed_rows[i,] <- NA
+        deepblue_export_meta_data(id,target.directory=out_dir,file.name=filename)
       }
       
     }
     
     failed_files <- failed_rows[!is.na(failed_rows$filename)]$filename
     n_failed <- length(failed_files)
-    n_good <- nrow(queued_files)-n_failed
     
     if(n_failed > 0) {
       
-      warning(paste(n_failed,"file(s) could not be downloaded:",paste(failed_files,collapse=", ")))
+      # Terminate execution
+      stop(paste("Download of",n_failed,"file(s) could not be completed due to previous errors:",paste(failed_files,collapse=", ")))
       
-    }
-    
-    if(n_good == 0) {
-      stop("No files were downloaded due to previous errors.")
-    } else {
-      message(paste(n_good,"file(s) downloaded to",normalizePath(out_dir)))
     }
     
   } else {
     
+    # All files in queue have already been downloaded
     message("No new files to download.")
     # exit with returncode 2 for generate_data.py error handling
     q(save="no",status=2)
