@@ -107,8 +107,8 @@ export class GraphTfComponent implements OnInit {
         var temp_density_scatter = {
           data: [
             {
-              x: rawData[biosource][tf][0][0],
-              y: rawData[biosource][tf][0][1],
+              x: rawData[biosource][tf]["rawData"][0][0],
+              y: rawData[biosource][tf]["rawData"][0][1],
               type: 'scattergl',
               mode: "markers",
               name: "points",
@@ -119,8 +119,8 @@ export class GraphTfComponent implements OnInit {
               },
             },
             {
-              x: rawData[biosource][tf][0][0],
-              y: rawData[biosource][tf][0][1],
+              x: rawData[biosource][tf]["rawData"][0][0],
+              y: rawData[biosource][tf]["rawData"][0][1],
               name: 'density',
               ncontours: 20,
               colorscale: 'Jet',
@@ -129,14 +129,14 @@ export class GraphTfComponent implements OnInit {
               type: 'histogram2dcontour'
             },
             {
-              x: rawData[biosource][tf][0][0],
+              x: rawData[biosource][tf]["rawData"][0][0],
               name: 'ATAC density',
               marker: { color: 'rgb(19,163,246)' },
               yaxis: 'y2',
               type: 'histogram'
             },
             {
-              y: rawData[biosource][tf][0][1],
+              y: rawData[biosource][tf]["rawData"][0][1],
               name: 'CHIP density',
               marker: { color: 'rgb(19,163,246)' },
               xaxis: 'x2',
@@ -221,13 +221,34 @@ export class GraphTfComponent implements OnInit {
         console.log(temp_density_scatter)
         //console.log(temp_3dsurface)
         //console.log(temp_contourPlot)
+        var table = {
+          data: [
+            {
+              type: "table",
+              columnwidth: 20,
+              header: {
+                values: [["<b>ATAC</b>"], ["<b>CHIP</b>"], ["<b>Weight</b>"]],
+                align: "center",
+                line: { width: 1, color: 'black' },
+                fill: { color: "grey" },
+                font: { family: "Arial", size: 14, color: "white" }
+              },
+              cells: {
+                values: rawData[biosource][tf]["analysisData"],
+                align: "center",
+                line: { color: "black", width: 1 },
+                font: { family: "Arial", size: 12, color: ["black"] }
 
+              }
+            }]
 
-
+        }
+        console.log(table)
         //temp_graph.push(temp_density_scatter)
         //temp_graph.push(temp_contourPlot)
         //temp_graph.push(temp_3dsurface)
         temp_graph.push(temp_density_scatter)
+        temp_graph.push(table)
         //temp_graph.push(temp_contourPlot)
         //temp_graph.push(temp_3dsurface)
         temp_tf.push(temp_graph)
