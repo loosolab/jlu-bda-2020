@@ -106,6 +106,7 @@ merge_chunks() {
 			fi
 			outfiles+=($outfile)
 			awk 'FNR>1' "$file" >> "$outfile"
+			rm $file
 		fi
 	done
 	merged_files=($(echo "${outfiles[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
@@ -129,6 +130,7 @@ export new_filename=""
 mv "$source_path"/*.chrom.sizes "$chrom_path"
 # Strip .txt ending of downloaded files
 rename s/'.txt'// $source_path/*.txt # TODO: error when doublequoting source_path/*
+rename s/'.meta'/'.meta.txt'/ $source_path/*.meta
 
 #Merge atac-seq chunks
 merge_chunks "$source_path"
