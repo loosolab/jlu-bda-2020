@@ -26,18 +26,30 @@ new_link=$dest_path/$csv_name
 headers=$(head -n1 "$csv_path")
 echo "$headers" > "$new_link"
 
+# arrays used to create normalization.csv later on
+declare -a biosources=()
+declare -a chromosomes=()
+declare -a epigenetic_marks=()
 
 #===============================================================================
 # Goes through all lines of the .csv and sorts the files according to the
 # sequencing technique, skipping non existing files to clean up the .csv .
 #===============================================================================
 
-# used to ensure dnase-seq also land in the proper atac-seq folder
 while IFS=";" read -r experiment_id	genome	biosource	technique	\
 	epigenetic_mark	chromosome filename	data_type file_path	remaining
 do
 	if [ ! -e "$source_path/$filename" ]; then
 		continue
+	fi
+	if [[ ! " ${biosources[*]} " =~  ${biosource} ]]; then
+   		biosources+=($biosource)
+	fi
+	if [[ ! " ${chromosomes[*]} " =~  ${chromosome} ]]; then
+   		chromosomes+=($chromosome)
+	fi
+	if [[ ! " ${epigenetic_marks[*]} " =~  ${epigenetic_mark} ]]; then
+   		epigenetic_marks+=($epigenetic_mark)
 	fi
 
 	# lowercase comparison to ensure
@@ -60,10 +72,23 @@ do
 $chromosome;$filename;$data_type;$newfile;$remaining" >> "$new_link"
 done < <(tail -n +2 "$csv_path")
 
-
-# TODO: temp linkage für logn in /temp
-# data/l1.csv /erster parameter run
-# data/l2.csv /zweiter parameter run
-# data/temp/norm.csv /nura aktuelle angaben
-# data/download/l1.csv
-# data/download/l2.csv
+#===============================================================================
+# Create linking table for normalization in /temp
+#===============================================================================
+csv=$source_path/normalization.csv
+echo "$headers" > "$csv"
+for lt in "$dest_path"/*.csv
+do
+	while IFS=";" read -r experiment_id	genome	biosource	technique	\
+		epigenetic_mark	chromosome remaining
+	do
+	if [[  " ${biosources[*]} " =~  ${biosource} ]]; then
+   		if [[  " ${chromosomes[*]} " =~  ${chromosome} ]]; then
+   			if [[  " ${epigenetic_marks[*]} " =~  ${epigenetic_mark} ]]; then
+					echo "$experiment_id;$genome;$biosource;$technique;\
+$epigenetic_mark;$chromosome;$remaining" >> "$csv"
+			fi
+		fi
+	fi
+	done < <(tail -n +2 "$lt")
+done
