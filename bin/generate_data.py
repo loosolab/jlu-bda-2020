@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from scripts.merge_reads import merge_all
 from scripts.generate_pickle import parse
+# //TODO: angular insall in visualisation folder
 
 
 class DataConfig:
@@ -14,10 +15,10 @@ class DataConfig:
 
     def __init__(self, genome, chromosome, biosource, epigenetic_mark,
                  output_path, csv_name, chromsizes, datatype):
-        self.genome = " ".join(genome)
-        self.chromosome = " ".join(chromosome)
-        self.biosource = " ".join(biosource)
-        self.epigenetic_mark = " ".join(epigenetic_mark)
+        self.genome = genome
+        self.chromosome = chromosome
+        self.biosource = biosource
+        self.epigenetic_mark = epigenetic_mark
         self.binpath = os.path.abspath(os.path.dirname(__file__))
         self.outpath = output_path
         self.csvname = csv_name
@@ -25,8 +26,7 @@ class DataConfig:
         self.type = datatype
         self.logfile = self.setup()
 
-        logging.info(self.genome + " " + self.biosource +
-                     " " + self.epigenetic_mark)
+        logging.info(self.genome + self.biosource + self.epigenetic_mark)
 
     def setup(self):
         """
@@ -72,13 +72,13 @@ class DataConfig:
         """
         tool = os.path.join(self.binpath, "scripts", "csv.r")
         path = os.path.join(self.outpath, "data", "download")
-        rc = subprocess.call(
-            [tool, "-b", self.biosource,
-             "-g", self.genome,
-             "-c", self.chromosome,
-             "-m", self.epigenetic_mark,
-             "-d", path,
-             "-o", self.csvname])
+        args = [tool, "-d", path, "-o", self.csvname, "-b"]
+        args.extend(self.biosource)
+        args.append("-c")
+        args.extend(self.chromosome)
+        args.append("-m")
+        args.extend(self.epigenetic_mark)
+        rc = subprocess.call(args)
         if rc != 0:
             logging.error("error generating .csv")
             raise Exception("csv.r could not create CSV")
