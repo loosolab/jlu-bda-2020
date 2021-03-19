@@ -14,3 +14,5 @@ dependencies:
   - flask
   - flask-restful
   - flask-cors
+  - bash
+  - pybigwig
