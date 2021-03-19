@@ -84,13 +84,13 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, redo_analysis):
                                             atac_score = atac.intervals(chromosom, peaklocationstart, peaklocationend)
 
                                             # calculate mean of chip and atac scores
-                                            if atac_score:
-                                                calculationls = []
-                                                calculationls.append(peaklocationstart)
-                                                calculationls.append(peaklocationend)
-                                                for i in (chip_score, atac_score):
-                                                    calculationls.append(calculate_mean(i, peaklocationstart, peaklocationend))
-                                                calculateddict[biosource][tf][chromosom].append(calculationls)
+                                            
+                                            calculationls = []
+                                            calculationls.append(peaklocationstart)
+                                            calculationls.append(peaklocationend)
+                                            for i in (chip_score, atac_score):
+                                                calculationls.append(calculate_mean(i, peaklocationstart, peaklocationend))
+                                            calculateddict[biosource][tf][chromosom].append(calculationls)
                         except RuntimeError:
                             print('Unable to open file '+file)
 
