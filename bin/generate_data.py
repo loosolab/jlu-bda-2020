@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from scripts.merge_reads import merge_all
 from scripts.generate_pickle import parse
+from scripts.normalize_signal_values import normalize_all
 # //TODO: angular insall in visualisation folder
 
 
@@ -164,7 +165,8 @@ class DataConfig:
         Calls scripts.normalize and handles return value
 
         """
-        pass
+        csv = os.path.join(self.outpath, "temp", "normalization.csv")
+        normalize_all(csv)
 
     def generate_dictionaries(self):
         """Generate pickle files for the downloaded data """
