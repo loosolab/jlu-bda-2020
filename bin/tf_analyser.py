@@ -141,8 +141,7 @@ def main():
 
         # download data from download_dict
         requested_data = generate_data.DataConfig([args.genome], args.chromosome, args.biosource, args.tf, args.output_path,
-                                                  'linking_table.csv', os.path.abspath
-                                                  (os.path.join(os.path.dirname(__file__), '../data/chromsizes/')),'bigwig')
+                                                  'linking_table.csv','bigwig')
         print(requested_data)
         requested_data.pull_data()
 
