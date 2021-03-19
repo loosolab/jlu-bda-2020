@@ -117,14 +117,16 @@ merge_chunks() {
 
 filetype=$1
 source_path=$2
-out_path=$3
-chrom_path=$4
-csv_name=$5
+out_path=$3/temp
+chrom_path=$3/chromsizes
+csv_name=$4
 
 new_link=$out_path/$csv_name
 touch "$new_link"
 export new_filename=""
 
+# move chrom.sizes to proper folder
+mv "$source_path"/*.chrom.sizes "$chrom_path"
 # Strip .txt ending of downloaded files
 rename s/'.txt'// $source_path/*.txt # TODO: error when doublequoting source_path/*
 

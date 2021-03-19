@@ -43,13 +43,13 @@ do
 		continue
 	fi
 	if [[ ! " ${biosources[*]} " =~  ${biosource} ]]; then
-   		biosources+=($biosource)
+   		biosources+=("$biosource")
 	fi
 	if [[ ! " ${chromosomes[*]} " =~  ${chromosome} ]]; then
-   		chromosomes+=($chromosome)
+   		chromosomes+=("$chromosome")
 	fi
 	if [[ ! " ${epigenetic_marks[*]} " =~  ${epigenetic_mark} ]]; then
-   		epigenetic_marks+=($epigenetic_mark)
+   		epigenetic_marks+=("$epigenetic_mark")
 	fi
 
 	# lowercase comparison to ensure

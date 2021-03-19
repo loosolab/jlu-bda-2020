@@ -14,7 +14,7 @@ class DataConfig:
       """
 
     def __init__(self, genome, chromosome, biosource, epigenetic_mark,
-                 output_path, csv_name, chromsizes, datatype):
+                 output_path, csv_name, datatype):
         self.genome = genome
         self.chromosome = chromosome
         self.biosource = biosource
@@ -22,7 +22,6 @@ class DataConfig:
         self.binpath = os.path.abspath(os.path.dirname(__file__))
         self.outpath = output_path
         self.csvname = csv_name
-        self.chromsizes = chromsizes
         self.type = datatype
         self.logfile = self.setup()
 
@@ -37,7 +36,8 @@ class DataConfig:
         result = os.path.join(self.outpath, "results")
         logs = os.path.join(self.outpath, "logs")
         download = os.path.join(self.outpath, "data", "download")
-
+        chromsizes = os.path.join(self.outpath,
+                                  "data", "chromsizes")
         if not os.path.exists(download):
             os.makedirs(download)
         if not os.path.exists(temp):
@@ -46,6 +46,8 @@ class DataConfig:
             os.makedirs(result)
         if not os.path.exists(logs):
             os.makedirs(logs)
+        if not os.path.exists(chromsizes):
+            os.makedirs(chromsizes)
 
         logname = time + "_generate_data.log"
         logfile = os.path.join(logs, logname)
@@ -109,10 +111,10 @@ class DataConfig:
         # TODO: outpath muss whitespace escapen/ mit "" übergeben werden
         tool = os.path.join(self.binpath, "scripts", "convert_files.sh")
         indir = os.path.join(self.outpath, "data", "download")
-        outdir = os.path.join(self.outpath, "data", "temp")
+        outdir = os.path.join(self.outpath, "data")
 
         rc = subprocess.call(
-            [tool, "bigwig", indir, outdir, self.chromsizes, self.csvname])
+            ["bash", tool, "bigwig", indir, outdir, self.csvname])
         if rc != 0:
             logging.error("convert_files.sh could not convert files")
             raise Exception("convert_files.sh could not convert files")
@@ -127,8 +129,12 @@ class DataConfig:
         bedgraphtobigwig = subprocess.check_output(
             ["which", "bedGraphToBigWig"])
         csvpath = os.path.join(self.outpath, "data", "temp", self.csvname)
+        chromsizes = []
+        for genome in self.genome:
+            chromsizes.append(os.path.join(self.outpath, "data",
+                                           "chromsizes", genome + ".chrom.sizes"))
         # TODO: self.chromsizes replace with array that contains paths to direct files
-        merge_all(csvpath, self.chromsizes, ["bigwig"],
+        merge_all(csvpath, chromsizes, ["bigwig"],
                   bedgraphtobigwig, bigwigMerge)
 
     def sort_files(self):
@@ -143,7 +149,7 @@ class DataConfig:
         csv = os.path.join(indir, self.csvname)
 
         rc = subprocess.call(
-            [tool, indir, outdir, csv, self.csvname])
+            ["bash", tool, indir, outdir, csv, self.csvname])
         if rc != 0:
             logging.error("sort_files.sh could not sort files")
             raise Exception("sort_files.sh could not sort files")
