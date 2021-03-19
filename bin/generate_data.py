@@ -97,6 +97,10 @@ class DataConfig:
         outdir = os.path.join(self.outpath, "data", "download")
 
         rc = subprocess.call([tool, "-i", csv, "-o", outdir])
+        if rc == 2:
+            logging.info("new new data was downloaded")
+            print("no new data was downloaded")
+            return
         if rc != 0:
             logging.error("export_from_csv.r could not download data")
             raise Exception("export_from_csv.r could not download data")
