@@ -11,7 +11,7 @@
 </div>
 -->
 <header>
-    <button mat-button class="card-button" color="primary" (click)="goBack()">Back</button>
+    <button mat-raised-button class="card-button" color="primary" (click)="goBack()">Back</button>
 </header>
 <mat-tree [dataSource]="nestedDataSource" [treeControl]="nestedTreeControl" class="example-tree">
     <mat-tree-node *matTreeNodeDef = "let node">
@@ -49,4 +49,4 @@
 </mat-tree>
 
 
-<button mat-button class="card-button" color="primary" (click)="goToResults()">See Results for selected Sources</button>
+<button mat-raised-button class="card-button" color="primary" (click)="goToResults()">See Results for selected Sources</button>
