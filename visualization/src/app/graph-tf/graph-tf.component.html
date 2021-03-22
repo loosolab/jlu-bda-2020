@@ -1,3 +1,7 @@
+<header>
+    <button mat-raised-button class="card-button" color="primary" (click)="goBack()">Back</button>
+</header>
+
 <div *ngFor="let biosource of graph_list_names_bio; let i_bio = index" [attr.data-index]="i_bio">
     <mat-card class="outer-card">
         <mat-card-header>

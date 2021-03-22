@@ -273,16 +273,9 @@ export class GraphTfComponent implements OnInit {
 
 
   }
-  goToTF(tf: string) {
-    console.log(tf)
-    let navigationExtras: NavigationExtras = {
-      state: {
-        tf: tf,
-        path: "path" + tf
-      }
-    }
-    this.router.navigate(["/single_tf"], navigationExtras)
-  }
 
+  goBack(){
+    this.router.navigate(["/graph_home"])
+  }
 
 }

@@ -90,6 +90,7 @@ export class GraphHomeComponent implements OnInit {
 
   }
 
+
   goToResults() {
     //console.log(this.nestedDataSource.data)
     //console.log(this.api_service.Tree_Data.value)
@@ -133,5 +134,9 @@ export class GraphHomeComponent implements OnInit {
 
   someChecked(node: TFItemNode): boolean {
     return node.children.filter(tf => tf.checked).length > 0 && !node.checked
+  }
+
+  goBack(){
+    this.router.navigate(["/home"])
   }
 }
