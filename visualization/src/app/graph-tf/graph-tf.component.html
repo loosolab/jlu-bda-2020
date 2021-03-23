@@ -26,6 +26,8 @@
                         </mat-card-title>
                     </mat-card-header>
                     <img class="img-border" src="assets/img/{{biosource}}/{{tf}}/Contour_{{tf}}.svg" width="550" title="3D Contout Plot">
+                     <br>
+                    This 3D Contour Plot contains the means of the ATAC Scores on the x-axis, the CHIP Scores on the y-axis and the density of these values on the z-axis.
                 </mat-card>
 
                 <mat-card class="tripple-card">
@@ -39,6 +41,10 @@
                     [layout]="graph_list[i_bio][a][0].layout"
                     [useResizeHandler]="true" 
                     [updateOnlyWithRevision]="true"></plotly-plot>
+                <br>
+                This Scatterplot contains the means of the ATAC Scores on the x-axis and the CHIP Scores on the y-axis.
+                The histograms on both axes are showing the distibution of that scores. 
+                This plot also contains a heatmap, which shows the densities of the used values. (It's maybe needed to zoom in.)
                 </mat-card>
                 <mat-card class="table-card">
                     <mat-card-header>
@@ -50,6 +56,8 @@
                     [data]="graph_list[i_bio][a][1].data" 
                     
                 ></plotly-plot>
+                <br>
+                This Table contains the weights of the individual components by the analysis.
                 </mat-card>
                 </div>
                 <!--</div>-->
