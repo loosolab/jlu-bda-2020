@@ -7,6 +7,9 @@ import os
 from argparse import RawTextHelpFormatter
 import xmlrpc.client as xc
 import subprocess
+from natsort import natsorted
+from tabulate import tabulate
+
 
 def main():
     """
@@ -16,9 +19,16 @@ def main():
     parameter -g / --genome= : genome
     parameter -b / --biosource= : one or more biosources divided by comma
     parameter -t / --tf= : one or more transcription factors divided by comma
-    parameter -w / --width= : parameter to define the range that will be analyzed (peak+-w)
-    parameter -r / --redo_analysis= : if stated, the analysis will be done for existing results
-    parameter -v / --visualize= : if stated, the visualisation will be called for existing results
+    parameter -c / --chromosome: one or more chromosomes divided by comma
+    parameter -w / --width= : a parameter that determines the size of the areas to be analyzed on the chromosomes.
+                              The start position is determined by subtracting the width from the summit of the peak,
+                              the end position is determined by adding the width to the summit.
+    parameter -o / --output_path: the path were the data and results should be stored
+    parameter -cs / --component_size: single integer determining the component size for the analysis
+    parameter -r / --redo_analysis= : existing results will be recalculated
+    parameter --visualize= : calls visualization for all existing results
+    parameter --list_chromosomes: prints a list of all genomes with their associated chromosomes
+    parameter --list_downloaded_data: prints a table containing all downloaded genomes, biosources, tfs and chromosomes
     """
 
     # import score, author: Noah
@@ -30,10 +40,7 @@ def main():
     # import generate_data, author: Jonathan
     import generate_data
 
-    # variable to declare if linking_table exists
-    linking_table_exist = False
-
-    # call deepbluer to get all available genomes, biosources and tfs from deepbluer
+    # call deepblue to get all available genomes, biosources and tfs
     url = "http://deepblue.mpi-inf.mpg.de/xmlrpc"
     server = xc.Server(url, encoding='UTF-8', allow_none=True)
     user_key = "anonymous_key"
@@ -46,41 +53,19 @@ def main():
         biosource_choices.append('all')
         biosource_choices.sort()
 
-        tf_choices = [tf[1].lower() for tf in server.list_epigenetic_marks({"category": "Transcription Factor Binding Sites"}, user_key)[1]]
+        tf_choices = [tf[1].lower() for tf in
+                      server.list_epigenetic_marks({"category": "Transcription Factor Binding Sites"}, user_key)[1]]
         tf_choices.append('all')
         tf_choices.sort()
 
         chromosomes = {}
         chr_choices = []
         for genome in genome_choices:
-            chr = [x[0] for x in server.chromosomes(genome, user_key)[1]]
-            chr_choices += chr
-            chromosomes[genome] = chr
+            chrom = [x[0] for x in server.chromosomes(genome, user_key)[1]]
+            chr_choices += chrom
+            chromosomes[genome] = natsorted(chrom)
     except xc.ProtocolError:
-        print('unable to connect to deepbluer')
-        biosource_choices=['GM12878']
-        tf_choices=['RELA']
-        genome_choices=['hg19']
-        chr_choices=['chr1']
-
-    # if linking_table exists:
-    # read in columns of the linking table that contain the names of the downloaded genomes,
-    # biosources and transcription factors  and safe every column in a set to remove duplicates
-    # set variable linking_table_exist to True
-    try:
-        lt = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'temp', 'linking_table.csv'),
-                         sep=';', usecols=['genome', 'epigenetic_mark', 'biosource'])
-        lt_genomes = set(lt.values[:, 0])
-        lt_tfs = [x for x in set(lt.values[:, 2][lt.values[:, 2] != ('dnasei' or 'dna accessibility')])]
-        lt_biosources = set(x for x in lt.values[:, 1] if x in biosource_choices)
-        linking_table_exist = True
-
-    # if linking_table does not exist:
-    # set list of downloaded genomes, biosources and tfs to "-"
-    except FileNotFoundError:
-        lt_genomes = None
-        lt_tfs = None
-        lt_biosources = None
+        raise Exception('DeepBlue is currently offline.')
 
     # links to deepbluer for possible genomes, biosources and tfs
     # given to the user if script is called with -h / --help
@@ -91,46 +76,92 @@ def main():
     # parse arguments submitted by the user
     parser = argparse.ArgumentParser(description='Analysis of transcription factors',
                                      formatter_class=RawTextHelpFormatter)
+
     parser.add_argument('-g', '--genome', default='hg19', type=str, choices=genome_choices,
-                        help='Allowed values are genome names from\n' + genomelink + '\n You already downloaded the '
-                                                                                     'following genomes:\n' + ', '.join(
-                            ["None"] if lt_genomes is None else lt_genomes),
+                        help='Allowed values are genome names from\n' + genomelink,
                         metavar='GENOME')
     parser.add_argument('-b', '--biosource', default=['all'], type=str, nargs='+', choices=biosource_choices,
-                        help='Allowed values are \'all\' or biosources from\n' + biosourcelink + '\n '
-                                                                                                                 'You already downloaded the following biosources:\n' + ', '.join(
-                            ["None"] if lt_biosources is None else lt_biosources),
+                        help='Allowed values are \'all\' or biosources from\n' + biosourcelink,
                         metavar='BIOSOURCE')
     parser.add_argument('-t', '--tf', default=['all'], type=str, nargs='+', choices=tf_choices,
-                        help='Allowed values are \'all\' or epigenetic marks from\n' + tflink + '\n '
-                                                                                                                'You already downloaded the following TFs:\n' + ', '.join(
-                            ["None"] if lt_tfs is None else lt_tfs),
+                        help='Allowed values are \'all\' or epigenetic marks from\n' + tflink,
                         metavar='TF')
     parser.add_argument('-c', '--chromosome', default=['all'], type=str, nargs='+', choices=chr_choices,
-                        help='Allowed values are \'all\' or the following chromosomes depending on the genome: \n',
+                        help='Allowed values are \'all\' or or the chromosomes belonging to the selected genome. \n'
+                             'To display the possible chromosomes, call the program with the parameter '
+                             '--list_chromosomes.',
                         metavar='CHROMOSOME')
     parser.add_argument('-w', '--width', default=50, type=int,
-                        help='parameter to define the range that will be analyzed (peak+-w)')
+                        help='A parameter that determines the size of the areas to be analyzed on the chromosomes. \n'
+                             'The start position is determined by subtracting the width from the summit of the peak, \n'
+                             'the end position is determined by adding the width to the summit.')
+    parser.add_argument('-o', '--output_path', default=os.path.abspath(os.path.join(os.path.dirname(__file__), '..')),
+                        type=str, nargs='?', help='The path were the downloaded data and the results will be stored.')
+    parser.add_argument('-cs', '--component_size', type=int, nargs='?',
+                        help='single integer determining the component size for the analysis')
     parser.add_argument('-r', '--redo_analysis', action='store_true',
                         help='existing results will be executed again and overwritten if argument is submitted')
-    parser.add_argument('-v', '--visualize', action='store_true',
-                        help='visualization will be called for existing results')
-    parser.add_argument('-cs', '--component_size', type=int, nargs='?', help='component size')
-    parser.add_argument('-o', '--output_path', default='./',
-                        type=str, nargs='?', help='output path')
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--visualize', action='store_true',
+                       help='calls visualization for all existing results')
+    group.add_argument('--list_chromosomes', action='store_true',
+                       help='prints a list of all genomes with their associated chromosomes')
+    group.add_argument('--list_downloaded_data', action='store_true',
+                       help='prints a table containing all downloaded genomes, biosources, tfs and chromosomes')
 
     args = parser.parse_args()
 
+    # test if img folder for visualization exists
+    if not os.path.exists(
+            os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'visualization', 'src', 'assets', 'img'))):
+        os.mkdir(
+            os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'visualization', 'src', 'assets', 'img')))
+
+    # remove images in visualization folder if analysis is executed again
+    if args.redo_analysis:
+        for f in os.listdir(os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '..', 'visualization', 'src', 'assets', 'img'))):
+            os.remove(f)
+
+    # print a list of all genomes and their associated chromosomes
+    if args.list_chromosomes:
+        for genome in genome_choices:
+            print(genome + ":\n")
+            l = len(chromosomes[genome]) % 5
+            i = 0
+            while i < len(chromosomes[genome]) - l:
+                print(" ".join(x.ljust(25) for x in chromosomes[genome][i:i + 5]))
+                i += 5
+            if l > 0:
+                print(" ".join(x.ljust(25) for x in chromosomes[genome][i:i + l]))
+            print("-" * 125)
+
+    # print a table containing the downloaded genomes, biosources, tfs and chromosomes from the linking_table
+    elif args.list_downloaded_data:
+
+        try:
+            lt = pd.read_csv(
+                os.path.join(args.output_path, 'data', 'linking_table.csv'),
+                sep=';', usecols=['genome', 'epigenetic_mark', 'biosource', 'chromosome'])
+            lt.drop(lt[lt['epigenetic_mark'] == ('dnasei' or 'dna accessibility')].index, inplace=True)
+            tab = lt.groupby(["genome", "biosource", "epigenetic_mark"]).chromosome.unique().apply(
+                lambda x: '\n'.join(x)).reset_index().to_dict(orient='list')
+            print(tabulate(tab, headers=['genome', 'biosource', 'transcription factor', 'chromosome'],
+                           tablefmt="fancy_grid"))
+
+        except FileNotFoundError:
+            raise Exception('You have not yet downloaded any data in this directory')
+
     # if -v / --visualize was stated, call visualisation for existing results
-    if args.visualize:
+    elif args.visualize:
         subprocess.Popen(['python',
                           os.path.join(os.path.dirname(__file__), 'scripts', 'visualization_app_api_start.py')])
-        subprocess.call(['ng', 'serve', '--live-reload'],
+        subprocess.call(['ng', 'serve'],
                         cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'visualization')))
-
     # compute analysis
     else:
-        # test if biosource or tf equals 'all'
+        # test if biosource, tf or chromosome equals 'all'
         # if yes, set the value to all possible values from deepbluer
         if 'all' in args.biosource:
             args.biosource = biosource_choices
@@ -139,14 +170,17 @@ def main():
         if 'all' in args.tf:
             args.tf = [x for x in tf_choices if x != "all"]
 
+        if 'all' in args.chromosome:
+            args.chromosome = chromosomes[args.genome]
+
         # download data from download_dict
-        requested_data = generate_data.DataConfig([args.genome], args.chromosome, args.biosource, args.tf, args.output_path,
-                                                  'linking_table.csv','bigwig')
-        print(requested_data)
+        requested_data = generate_data.DataConfig([args.genome], args.chromosome, args.biosource, args.tf,
+                                                  args.output_path, 'linking_table.csv', 'bigwig')
         requested_data.pull_data()
 
         # run the script score.py and store the calculated scores in the dictionary 'scores'
-        scores, exist = scripts.score.findarea(args.width, args.genome.lower(), [x.lower() for x in args.biosource], [x.lower() for x in args.tf], args.chromosome, args.redo_analysis)
+        scores, exist = scripts.score.findarea(args.width, args.genome.lower(), [x.lower() for x in args.biosource],
+                                               [x.lower() for x in args.tf], args.chromosome, args.redo_analysis)
 
         # test if 'scores' is an empty dictionary
         # if not, generate plots with the script analyse_main.py
@@ -154,13 +188,14 @@ def main():
         # if yes and exist is False, notify that there is no data for the submitted combination of genome, biosource and
         # transcription factor and exit the program
         if scores:
-            resultframe = scripts.analyse_main.TF_analyser(n_comps=args.component_size,genome=args.genome, width=args.width).mainloop(data=scores)
-            print(resultframe)
+            scripts.analyse_main.TF_analyser(n_comps=args.component_size, genome=args.genome, width=args.width,
+                                             path=args.output_path, chromosome=args.chromosome).mainloop(data=scores)
 
         if scores or exist:
+
             subprocess.Popen(['python',
                               os.path.join(os.path.dirname(__file__), 'scripts', 'visualization_app_api_start.py')])
-            subprocess.call(['ng', 'serve', '--live-reload'],
+            subprocess.call(['ng', 'serve'],
                             cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'visualization')))
 
         else:
