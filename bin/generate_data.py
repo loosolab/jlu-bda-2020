@@ -165,7 +165,7 @@ class DataConfig:
         Calls scripts.normalize and handles return value
 
         """
-        csv = os.path.join(self.outpath, "temp", "normalization.csv")
+        csv = os.path.join(self.outpath, "data", "temp", "normalization.csv")
         normalize_all(csv)
 
     def generate_dictionaries(self):
