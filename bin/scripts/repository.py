@@ -53,7 +53,7 @@ class Repository:
         -------
         Pandas Dataframe
         """
-        return pd.read_csv(filename, converters={'Means': self.from_np_array, 'Covariances': self.from_np_array, 'weights': self.from_float_string})
+        return pd.read_csv(filename, converters={'means': self.from_np_array, 'covariances': self.from_np_array, 'weights': self.from_float_string})
 
     def inputHandler(self, path):
         """

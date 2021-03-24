@@ -20,7 +20,7 @@ class TF_analyser:
     part.
     """
     
-    def __init__(self, n_comps, genome, width):
+    def __init__(self, n_comps, genome, width, path, chromosome):
         """
         Initiation of Variables
 
@@ -29,10 +29,8 @@ class TF_analyser:
         None.
 
         """
-        path_scripts = os.path.dirname(__file__)
-        path_bin = os.path.split(path_scripts)
-        path_main = os.path.split(path_bin[0])
-        self.path_results = os.path.join(path_main[0], 'results')
+        self.chr = chromosome
+        self.path_results = path
             
         self.genome = genome
         self.width = width
@@ -90,7 +88,7 @@ class TF_analyser:
         
         # total = Input().number_of_chr(data)
         
-        resultframe =pd.DataFrame(columns=['genome','width','mode','biosource','tf','means','covariances', 'weights']) 
+        resultframe =pd.DataFrame(columns=['genome','width','mode','chr','biosource','tf','means','covariances', 'weights']) 
 
         # i = 0
         # loop all biosources
@@ -106,14 +104,14 @@ class TF_analyser:
                 
                     for array in chromosome:
     
-                            scoresarray.append([array[-1], array[-2]])
+                            scoresarray.append([array[-2], array[-1]])
             
                 
                 # Main().progress(i, total, '')
                 
                 
-                scaled_scores = TF_analyser.scale(self, scoresarray)
-                distribution = np.array(scaled_scores)
+               # scaled_scores = TF_analyser.scale(self, scoresarray)
+                distribution = np.array(scoresarray)
                 
                 mode = 'manual'
                 
@@ -123,18 +121,19 @@ class TF_analyser:
                     #automated number of components evaluation  
                     all_diffs = GmFit.getDifference(self, distribution, self.eval_size)
                     self.n_components = GmFit.evaluate(self, all_diffs)
-                    plt.plot(all_diffs)
+                    #plt.plot(all_diffs)
                 
                 single_result = EMA().emAnalyse(distribution, self.n_components)
                
                 single_result.insert(0,'tf',tf)
+                single_result.insert(0,'chr',self.chr)
                 single_result.insert(0,'biosource',biosource)
                 single_result.insert(0, 'mode', mode)
                 single_result.insert(0,'width', self.width)
                 single_result.insert(0,'genome', self.genome)
                 
                 #visualization and saving plots 
-                v= VD(self.path_results, tf, self.genome)
+                v= VD(self.path_results, tf, self.genome, biosource)
                 path = v.displayDensityScatter(distribution, tf)
                 
                 v.altitudePlot(distribution, self.n_components, tf)
@@ -147,7 +146,7 @@ class TF_analyser:
                 #save data
                 np.savetxt(path + '/' + tf + '.csv', scoresarray, delimiter=',')
                 
-                single_result.insert(8, 'path', path)
+                single_result.insert(9, 'path', path)
                 
                 resultframe = pd.concat([resultframe, single_result])
                 
@@ -207,7 +206,12 @@ class TF_analyser:
 if __name__ == '__main__':
 
     data = Repository().inputHandler(path='/home/jan/python-workspace/angewendete_daten_analyse/testsets/calculated_data_3.pickle')
-    resultframe = TF_analyser(None, "Genome", "width").mainloop(data)
+    path_scripts = os.path.dirname(__file__)
+    path_bin = os.path.split(path_scripts)
+    path_main = os.path.split(path_bin[0])
+    path = os.path.join(path_main[0], 'results')
+    
+    resultframe = TF_analyser(None, "Genome", "width", path, "chr1").mainloop(data)
     # dirname = os.path.dirname(__file__)
     # resultframe.to_csv(dirname + '/result.csv', index = False, decimal=(','))
     print(resultframe)
