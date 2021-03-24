@@ -236,6 +236,8 @@ def get_value_index(column_names):
     :return: index: Integer representing index of column with signal value in
              file
     """
+    column_names = column_names.split(',')
+    
     if "SIGNAL_VALUE" in column_names:
         index = column_names.index("SIGNAL_VALUE")
     else:
