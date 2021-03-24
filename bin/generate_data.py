@@ -62,8 +62,8 @@ class DataConfig:
         self.download_data()
         self.validate_convert_files()
         self.merge_forward_reverse()
-        self.normalize()
         self.sort_files()
+        self.normalize()
         self.generate_dictionaries()
 
     def generate_csv(self):
