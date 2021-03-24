@@ -12,14 +12,16 @@ import scripts.repository
 
 def findarea(w, genom, biosource_ls, tf_ls, chr_list, redo_analysis):
     # path to pickledata
-    picklepath = str(os.path.dirname(os.path.abspath(__file__)).replace("bin/scripts", "data/pickledata/"))
+    picklepath = os.path.abspath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data', 'pickledata'))
+
     exist = False
 
     calculateddict = {}
 
     try:
         result_csv = scripts.repository.Repository().read_csv(
-            filename=os.path.dirname(os.path.abspath(__file__)).replace("bin/scripts", "results/result.csv"))
+            filename=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'results', 'result.csv')))
     except FileNotFoundError:
         result_csv = None
 
@@ -28,13 +30,13 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, redo_analysis):
     for biosource in biosource_ls:
 
         # load dictionarys contaning paths to chip and atac bigwig files
-        atacdict = pickle.load(open(picklepath + genom + "/atac-seq/" + biosource + ".pickle", "rb"))
-        chipdict = pickle.load(open(picklepath + genom + "/chip-seq/" + biosource + ".pickle", "rb"))
+        atacdict = pickle.load(open(os.path.join(picklepath, genom, 'atac-seq', biosource + ".pickle"), "rb"))
+        chipdict = pickle.load(open(os.path.join(picklepath, genom, 'chip-seq', biosource + ".pickle"), "rb"))
 
         # generate key for biosource if it does not exist
         if biosource not in calculateddict:
             calculateddict[biosource] = {}
-        
+
         for tf in chipdict:
 
             # test if result for biosource-tf already exists
@@ -84,17 +86,18 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, redo_analysis):
                                             atac_score = atac.intervals(chromosom, peaklocationstart, peaklocationend)
 
                                             # calculate mean of chip and atac scores
-                                            
+
                                             calculationls = []
                                             calculationls.append(peaklocationstart)
                                             calculationls.append(peaklocationend)
                                             for i in (chip_score, atac_score):
-                                                calculationls.append(calculate_mean(i, peaklocationstart, peaklocationend))
+                                                calculationls.append(
+                                                    calculate_mean(i, peaklocationstart, peaklocationend))
                                             calculateddict[biosource][tf][chromosom].append(calculationls)
                         except RuntimeError:
-                            print('Unable to open file '+file)
+                            print('Unable to open file ' + file)
 
-                    print(tf, " done")
+                    print(tf, ' done')
 
                     # remove key if the value is empty
                     if calculateddict[biosource][tf]:
@@ -107,24 +110,24 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, redo_analysis):
             pass
         else:
             del calculateddict[biosource]
-    
+
     return calculateddict, exist
 
-def calculate_mean(i,peaklocationstart, peaklocationend):
-    length = 0
+
+def calculate_mean(i, peaklocationstart, peaklocationend):
+    length = peaklocationend-peaklocationstart
     mean = 0
     if i:
         for interval in i:
-            if interval[0]< peaklocationstart and interval[1] > peaklocationend:
+            if interval[0] < peaklocationstart and interval[1] > peaklocationend:
                 interval_length = peaklocationend - peaklocationstart
             else:
                 if interval[1] > peaklocationend:
                     interval_length = peaklocationend - interval[0]
-                elif interval[0]< peaklocationstart:
+                elif interval[0] < peaklocationstart:
                     interval_length = interval[1] - peaklocationstart
                 else:
                     interval_length = interval[1] - interval[0]
-            length += interval_length
             mean += interval_length * interval[2]
-        mean = mean / length
+    mean = mean / length
     return mean

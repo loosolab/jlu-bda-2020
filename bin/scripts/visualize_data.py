@@ -15,7 +15,7 @@ import os
 class VisualizeData:
     
         
-        def __init__(self,path,tf_id, genome):
+        def __init__(self,path,tf_id, genome, biosource):
             """
             Initialize variables and set up directory if necessary
 
@@ -31,10 +31,19 @@ class VisualizeData:
             None.
 
             """
-            genome_path = (os.path.join(path, genome))
-            self.path_plots = (os.path.join(genome_path, 'plots')) + "/" + tf_id
+            #genome_path = (os.path.join(path, genome))
+            self.path_plots = (os.path.join(path,'plots',genome ,biosource ,tf_id))
+            path_scripts = os.path.dirname(__file__)
+            path_bin = os.path.split(path_scripts)
+            path_main = os.path.split(path_bin[0])
+            self.path_visualization = os.path.join(path_main[0], "visualization/assests/img/", biosource + genome, tf_id)
             try:
                 os.makedirs(self.path_plots)
+            except:
+                pass
+            
+            try:
+                os.makedirs(self.path_visualization)
             except:
                 pass
             
@@ -135,11 +144,13 @@ class VisualizeData:
             # Make the plot
             fig = plt.figure()
             ax = fig.gca(projection='3d')
+            ax.set_ylabel('CHIP')
+            ax.set_xlabel('ATAC')
             ax.plot_trisurf(x, y, z, cmap=plt.cm.coolwarm, linewidth=1, antialiased=False)
             # ax.plot_surface(x, y, z, color='b')
-            figure_path = self.path_plots + "/Contour_" + tf_id + ".svg"
+            figure_path = os.path.join(self.path_plots, "Contour_" + tf_id + ".svg")
             plt.savefig(figure_path, format="svg")
-            
+            vil_fig_path = os.path.join(self.path_visualization, "Contour_" + tf_id + ".svg")
             plt.show()
             
             return z
@@ -177,5 +188,14 @@ class VisualizeData:
             
             figure_path = self.path_plots + "/Altitude_" + tf_id + ".svg"
             plt.savefig(figure_path, format= "svg")
+            #plt.savefig(/visualization/assests/img/, kwargs)
             
             plt.show()
+            
+if __name__ == '__main__':
+    path = "/home/python/"
+    tf_id = "1234"
+    genome = "genom"
+    biosource = "Dito"
+    
+    v = VisualizeData(path, tf_id, genome, biosource)
