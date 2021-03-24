@@ -211,7 +211,7 @@ def min_max_scale_file(file_path, log_file_path, min_val,
         # to tmp file and then start printing files with values
         with open(file_path, 'r') as file:
             first_line = file.readline()
-        skip_rows = False if is_float(first_line.split('\t')[idx]) else True
+        skip_rows = False if is_float(first_line.split('\t')[-1]) else True
 
         with open(file_path, 'r') as file, open(tmp_file_path, 'w') as tmp_file:
             if skip_rows:
