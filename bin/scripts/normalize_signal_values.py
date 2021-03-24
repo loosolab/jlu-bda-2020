@@ -122,7 +122,7 @@ def log_scale_file(file_path, column_names=None):
         # numpy.loadtxt() and skip first row in file if needed
         with open(file_path, 'r') as file:
             first_line = file.readline()
-        skip_rows = 0 if is_float(first_line.split('\t')[idx]) else 1
+        skip_rows = 0 if is_float(first_line.split('\t')[-1]) else 1
 
         signal_values = numpy.loadtxt(file_path, usecols=[idx],
                                       skiprows=skip_rows)
