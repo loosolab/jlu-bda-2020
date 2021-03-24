@@ -50,13 +50,25 @@ def normalize_all(linkage_table_path):
     # If they have, then add path of existing .ln file to log_file_paths,
     # else log-scale and then add new path
     for i in range(0, len(file_paths)):
+        log_file_path = None
 
         if os.path.exists(file_paths[i]):
-            log_file_path = file_paths[i] + ".ln"
+            try:
+                log_file_path = log_scale_file(file_paths[i], column_names[i])
+            except FileNotFoundError:
+                # Add logging
+                excluded_files.append(i)
+            except RuntimeError as err:
+                # Add logging
+                excluded_files.append(i)
         else:
-            log_file_path = log_scale_file(file_paths[i], column_names[i])
+            excluded_files.append(i)
+            raise FileNotFoundError(
+                "The file {} does not exist or the file path is "
+                "incorrect.".format(file_paths[i]))
 
-        log_file_paths.append(log_file_path)
+        if log_file_path is not None:
+            log_file_paths.append(log_file_path)
 
     # Find global min and global max values
     for log_path in log_file_paths:
