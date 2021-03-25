@@ -51,8 +51,12 @@ def normalize_all(linkage_table_path):
     column_names = list(linkage_table["format"])
     log_file_paths = []
     excluded_files = []
-    min_value = math.inf
+    min_value = 0
     max_value = -math.inf
+
+    # Give update message for module
+    print("Now starting normalisation process. " + str(len(file_paths)) +
+          " files will be normalised.")
 
     # Check all files to see if they have been log-scaled before or not.
     # If they have, then add path of existing .ln file to log_file_paths,
@@ -92,7 +96,7 @@ def normalize_all(linkage_table_path):
                 min_value, max_value = get_min_max(log_path, min_val=min_value,
                                                    max_val=max_value)
             except RuntimeError as err:
-                logging.error('The following error has occured while calling '
+                logging.error('The following error has occurred while calling '
                               'the method get_min_max() for the file {}: '
                               .format(log_path) + '{}'.format(err))
 
@@ -105,16 +109,22 @@ def normalize_all(linkage_table_path):
                                        column_names=column_names[j])
                 except RuntimeError as err:
                     logging.error(
-                        'The following error has occured while calling '
+                        'The following error has occurred while calling '
                         'the method min_max_scale_file() for the file {}: '
                         .format(file_paths[j]) + '{}'.format(err))
 
-        # Add output: str(len(file_paths) - len(excluded_files) + ' of' +
-        # str(len(file_paths)) + ' were normalised.'
+        # Give update message for module's success
+        print(str(len(file_paths) - len(excluded_files)) + " of " +
+              str(len(file_paths)) + " were successfully normalised. If not "
+              "all files were normalised, check logging for further "
+              "information.")
 
     else:
         logging.warning("No files were normalized.")
-    # Add output: 'No files were normalised.'
+
+        # Give update message for module's success
+        print("Warning: No files were normalised. Please check logging for "
+              "further information.")
 
 
 def log_scale_file(file_path, column_names=None):
