@@ -103,5 +103,15 @@ The third output is a table containing the weights of the individual components 
 
 If any problems occur in the visualization, please check the web console of your browser.
 
+## Known errors
+
+### "Cannot find module..." when launching the web server
+```
+An unhandled exception occured: Cannot find module '@angular-devkit/build-angular/package.json'
+Require stack:
+[...]
+```
+To fix this, run `npm install --save-dev @angular-devkit/build-angular` inside the `visualization/` folder. Afterwards, run `ng serve` (in the same folder) to start the server.
+
 ## License
 (to be added)
