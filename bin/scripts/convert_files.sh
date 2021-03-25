@@ -118,6 +118,7 @@ merge_chunks() {
 	done
 }
 
+echo "validating files"
 filetype=$1
 source_path=$2
 out_path=$3/temp

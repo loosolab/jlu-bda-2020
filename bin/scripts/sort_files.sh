@@ -16,6 +16,7 @@
 #  NOTES:  ---
 #  AUTHOR:  Jonathan Schäfer
 #===============================================================================
+echo "sorting files"
 
 source_path=$1
 dest_path=$2
