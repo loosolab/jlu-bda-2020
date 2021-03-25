@@ -94,7 +94,7 @@ def read_bed(file):
 
     chromosome = defaultdict(list)
 
-    f = pd.read_csv(file, sep='\t', usecols=lambda c: c in {'seqnames', 'start', 'end', 'SIGNAL_VALUE', 'PEAK'})
+    f = pd.read_csv(file, sep='\t', usecols=lambda c: c in {'seqnames', 'start', 'end', 'SIGNAL_VALUE', 'PEAK'}, index_col=False)
 
     for index, row in f.iterrows():
         start = int(row['start'])
