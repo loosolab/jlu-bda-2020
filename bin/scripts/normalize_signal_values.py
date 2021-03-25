@@ -74,7 +74,7 @@ def normalize_all(linkage_table_path):
                               'excluded from the normalisation '
                               'process.'.format(file_paths[i]))
                 excluded_files.append(i)
-            except RuntimeError as err:
+            except (RuntimeError, UnicodeEncodeError) as err:
                 logging.error('The following Error has occurred while calling '
                               'log_scale_file: \"{}\"'.format(err) + ' for '
                               'the following file: \"{}\"'.format(
