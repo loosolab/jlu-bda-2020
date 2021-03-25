@@ -61,9 +61,6 @@ def normalize_all(linkage_table_path):
         log_file_path = None
 
         if os.path.exists(file_paths[i]):
-            log_file_path = file_paths[i] + ".ln"
-
-        else:
             try:
                 log_file_path = log_scale_file(file_paths[i], column_names[i])
             except FileNotFoundError:
@@ -79,6 +76,11 @@ def normalize_all(linkage_table_path):
                               'the following file: \"{}\"'.format(
                                file_paths[i]))
                 excluded_files.append(i)
+        else:
+            excluded_files.append(i)
+            logging.error("The file {} does not exist or the file path is "
+                          "incorrect and it has been excluded from "
+                          "normalisation.".format(file_paths[i]))
 
         if log_file_path is not None:
             log_file_paths.append(log_file_path)
@@ -286,6 +288,8 @@ def get_value_index(column_names):
     :return: index: Integer representing index of column with signal value in
              file
     """
+    column_names = column_names.split(',')
+
     if "SIGNAL_VALUE" in column_names:
         index = column_names.index("SIGNAL_VALUE")
     else:
