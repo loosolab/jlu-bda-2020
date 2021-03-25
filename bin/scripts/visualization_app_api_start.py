@@ -13,8 +13,9 @@ import api_calls
 # create the Flask app
 app = Flask(__name__)
 cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
-app.config['CORS_ORIGINS'] = '*'
+app.config['CORS_HEADERS'] = ['Content-Type']
+app.config['CORS_ORIGINS'] = ['*']
+app.config['CORS_METHODS'] = ['GET', 'POST']
 
 @app.route('/getTreeData', methods=["GET"])
 def getTreeData():
