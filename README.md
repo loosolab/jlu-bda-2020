@@ -45,9 +45,9 @@ dependencies:
   - util-linux=2.36
 ```
 
-2. Run `conda activate tf_analyzer` to activate the environment.
+2. Run `conda activate tf_analyzer` to activate the environment. This needs to stay activated in order for the tool to work.
 
-The newly created environment (`tf_analyzer`) needs to stay activated in order for the tool to work.
+3. From the repository root, navigate to `visualization/` and execute the following command: `npm install -g @angular/cli`.
 
 ## How to use
 The pipeline can be initiated by running `python bin/tf_analyzer.py` with these arguments:
