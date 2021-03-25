@@ -178,8 +178,12 @@ def log_scale_file(file_path, column_names=None):
                 first_line = file.readline()
             skip_rows = 0 if is_float(first_line.split('\t')[idx]) else 1
 
-            signal_values = numpy.loadtxt(file_path, usecols=[idx],
-                                          skiprows=skip_rows)
+            #Read signal values
+            f = open(file_path, "r")
+            lines = f.readlines()
+            lines = lines[skip_rows:] #skip first x rows
+            signal_values = numpy.array([float(line[idx]) for line in lines])
+
             # Make sure there are no 0s in array before attempting log-scaling
             # if there are, replace them with '1' so the value after scaling
             # will be 0
@@ -214,9 +218,19 @@ def get_min_max(log_file_path, min_val=math.inf, max_val=-math.inf):
         log_bw.close()
 
     else:
-        signal_values = numpy.loadtxt(log_file_path, usecols=[0])
-        tmp_min = min(signal_values)
-        tmp_max = max(signal_values)
+        
+        #Find minimum and maximum values within file
+        tmp_min = math.inf
+        tmp_max = -math.inf
+        with open(log_file_path) as f:
+            for line in f:
+                value = float(line[0]) #fetch value from line
+
+                #update min/max values
+                if value < tmp_min:
+                    tmp_min = value
+                if value > tmp_max:
+                    tmp_max = value
 
     min_val = tmp_min if tmp_min < min_val else min_val
     max_val = tmp_max if tmp_max > max_val else max_val
@@ -263,11 +277,8 @@ def min_max_scale_file(file_path, log_file_path, min_val,
         min_max_bw.close()
 
     else:
-        log_values = numpy.loadtxt(log_file_path, usecols=[0])
-        min_max_values = [(x - min_val) / (max_val - min_val) for x in
-                          log_values]
+
         idx = get_value_index(column_names)
-        cnt = 0
 
         # Check if file has head and if so copy first line from current file
         # to tmp file and then start printing files with values
@@ -275,18 +286,30 @@ def min_max_scale_file(file_path, log_file_path, min_val,
             first_line = file.readline()
         skip_rows = False if is_float(first_line.split('\t')[idx]) else True
 
-        with open(file_path, 'r') as file, open(tmp_file_path, 'w') as tmp_file:
-            if skip_rows:
-                row = file.readline().strip() + '\n'
-                tmp_file.write(row)
+        #Open input/output files for converting values
+        file_in = open(file_path, "r")
+        file_log = open(log_file_path, "r")
+        file_out = open(tmp_file_path, 'w')
 
-            for line in file:
-                line_split = line.strip().split("\t")
-                line_split[idx] = str(min_max_values[cnt])
-                cnt += 1
-                line_split.append("\n")
-                line_write = "\t".join(line_split)
-                tmp_file.write(line_write)
+        if skip_rows:
+            row = file_in.readline().strip() + '\n'
+            file_out.write(row)
+
+        #Convert each value by going line-per-line
+        for line in file_in:
+            line_split = line.strip().split("\t")
+
+            log_value = float(file_log.readline().strip()) #read log-value from the log value file
+
+            #Convert value and write to out_file
+            line_split[idx] = (log_value - min_val) / (max_val - min_val)
+            line_split[idx] = str(line_split[idx]) #convert to string so that join does not complain
+            line_write = "\t".join(line_split) + "\n"
+            file_out.write(line_write)
+
+        file_in.close()
+        file_log.close()
+        file_out.close()
 
     os.rename(tmp_file_path, file_path)
 
