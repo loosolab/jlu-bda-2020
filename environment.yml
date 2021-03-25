@@ -20,3 +20,4 @@ dependencies:
   - kneed=0.7.0
   - sklearn2pmml=0.69.0
   - natsort=7.1.1
+  - tabulate=0.8.9
