@@ -72,7 +72,7 @@ convert_file() {
 		fi
 		if [ "$file_extension" == "bedgraph" ]; then
 			newfile="$out_path/$file_name.$file_extension"
-			if [ $(head -1 $newfile | tr '\t' '\n' | wc -l) == 6 ]; then
+			if [ "$(head -1 "$newfile" | tr '\t' '\n' | wc -l)" == 6 ]; then
 				cut --fields 1-3,6 "$newfile" > "$6/tempfile"
 				mv "$6/tempfile" "$newfile"
 			fi
@@ -106,9 +106,9 @@ merge_chunks() {
 				# TODO: echo "outfile: $outfile" Logging
 				head -n1 "$file" > "$outfile"
 			fi
-			outfiles+=($outfile)
+			outfiles+=("$outfile")
 			awk 'FNR>1' "$file" >> "$outfile"
-			rm $file
+			rm "$file"
 		fi
 	done
 	merged_files=($(echo "${outfiles[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
@@ -132,8 +132,8 @@ export new_filename=""
 # move chrom.sizes to proper folder
 mv "$source_path"/*.chrom.sizes "$chrom_path" &>/dev/null
 # Strip .txt ending of downloaded files
-rename s/'.txt'// $source_path/*.txt &>/dev/null # TODO: error when doublequoting source_path/*
-rename s/'.meta'/'.meta.txt'/ $source_path/*.meta &>/dev/null
+rename s/'.txt'// "$source_path"/*.txt &>/dev/null # TODO: error when doublequoting source_path/*
+rename s/'.meta'/'.meta.txt'/ "$source_path"/*.meta &>/dev/null
 
 #Merge atac-seq chunks
 merge_chunks "$source_path"
