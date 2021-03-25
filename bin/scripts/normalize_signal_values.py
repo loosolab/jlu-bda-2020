@@ -108,7 +108,12 @@ def log_scale_file(file_path, column_names=None):
             chromosomes = [chrom] * len(intervals)
             starts = [interval[0] for interval in intervals]
             ends = [interval[1] for interval in intervals]
-            signal_values = [interval[2] for interval in intervals]
+            # Make sure there are no 0s in array before attempting
+            # log-scaling while getting signal values
+            # if there are, replace them with '1' so the value after scaling
+            # will be 0
+            signal_values = [interval[2] if interval[2] != 0 else 1 for
+                             interval in intervals]
             log_values = numpy.log(signal_values)
             bw_log.addEntries(chromosomes, starts, ends=ends, values=log_values)
 
@@ -126,6 +131,10 @@ def log_scale_file(file_path, column_names=None):
 
         signal_values = numpy.loadtxt(file_path, usecols=[idx],
                                       skiprows=skip_rows)
+        # Make sure there are no 0s in array before attempting log-scaling
+        # if there are, replace them with '1' so the value after scaling
+        # will be 0
+        signal_values[signal_values == 0] = 1
         log_values = numpy.log(signal_values)
         log_values = [str(value) + "\n" for value in log_values]
 
