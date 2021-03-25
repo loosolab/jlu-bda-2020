@@ -1,5 +1,4 @@
 #!/bin/env bash
-# TODO: wenn file schon richtig, konvertierung skippen
 #===============================================================================
 #
 #  FILE:  convert.sh
@@ -63,6 +62,9 @@ validate_filetype () {
 convert_file() {
 	local file_extension=${2##*.}
 	local file_name=${2%.*}
+	if [ -e "$out_path/$file_name.bw" ]; then
+		return 0
+	fi
 	if [ "$3" == "bigwig" ] || [ "$3" == "bw" ]; then
 		if  [ "$file_extension" == "bed" ]; then
 			cut --fields 1-3,8 "$1" > "$out_path/$file_name.bedgraph"
