@@ -97,12 +97,12 @@ merge_chunks() {
 	folder=$1
 	outfiles=()
 	for file in $(ls -v "$folder"); do
-		file=$folder/$file
+		file="$folder/$file"
 		temp=$(basename "$folder/$file")
 		filename=${temp/_chunk*/}
 		if [[ $file == *"chunk"* ]]; then
 			if [[ $outfile != $folder/$filename ]]; then
-				outfile=$folder/$filename
+				outfile="$folder/$filename"
 				# TODO: echo "outfile: $outfile" Logging
 				head -n1 "$file" > "$outfile"
 			fi

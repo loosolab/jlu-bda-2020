@@ -115,8 +115,8 @@ def normalize_all(linkage_table_path):
 
         # Give update message for module's success
         print(str(len(file_paths) - len(excluded_files)) + " of " +
-              str(len(file_paths)) + " were successfully normalised. If not "
-              "all files were normalised, check logging for further "
+              str(len(file_paths)) + "files were successfully normalised. If "
+              "not all files were normalised, check logging for further "
               "information.")
 
     else:
@@ -277,7 +277,8 @@ def min_max_scale_file(file_path, log_file_path, min_val,
 
         with open(file_path, 'r') as file, open(tmp_file_path, 'w') as tmp_file:
             if skip_rows:
-                tmp_file.write(file.readline())
+                row = file.readline().strip() + '\n'
+                tmp_file.write(row)
 
             for line in file:
                 line_split = line.strip().split("\t")
