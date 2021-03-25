@@ -111,7 +111,7 @@ merge_chunks() {
 			rm "$file"
 		fi
 	done
-	merged_files=($(echo "${outfiles[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+	merged_files=("$(echo "${outfiles[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')")
 	for file in ${merged_files[*]}; do
 		uniq "$file" > "tempfile"
 		mv "tempfile" "$file"
