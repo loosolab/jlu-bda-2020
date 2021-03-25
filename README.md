@@ -1,4 +1,5 @@
-# jlu-bda-2020
+# TF Analyzer
+
 This tool allows for the analysis and classification of transcription factors by calculating the relations between TF binding sites and chromatin accessibility, using the [Deepblue Epigenomic Data Server](https://deepblue.mpi-inf.mpg.de/) to link epigenomic ChIP-seq and ATAC/DNAse-seq data by biosource (i.e. cell type).
 
 The latest working build can be cloned from the `dev` branch.
@@ -20,33 +21,36 @@ The latest working build can be cloned from the `dev` branch.
 1. Run `conda env create -f environment.yml` to create a conda environment with the following modules:
 ```
 channels:
-- bioconda
-- conda-forge
+  - bioconda
+  - conda-forge
 dependencies:
-- r-base
-- r-data.table
-- bioconductor-deepbluer
-- ucsc-bedgraphtobigwig
-- ucsc-bigwigtobedgraph
-- ucsc-bigwigmerge
-- pandas
-- nodejs
-- flask
-- flask-restful
-- flask-cors
-- bash
-- pybigwig
+  - r-base=4.0.3
+  - r-data.table=1.14.0
+  - bioconductor-deepbluer=1.16.0
+  - ucsc-bedgraphtobigwig=377
+  - ucsc-bigwigtobedgraph=377
+  - ucsc-bigwigmerge=377
+  - pandas=1.2.3
+  - nodejs=15.12.0
+  - flask=1.1.2
+  - flask-restful=0.3.8
+  - flask-cors=3.0.8
+  - bash=5.0.018
+  - pybigwig=0.3.18
+  - matplotlib=3.3.4
+  - kneed=0.7.0
+  - sklearn2pmml=0.69.0
+  - natsort=7.1.1
+  - tabulate=0.8.9
+  - util-linux=2.36
 ```
-If the "solving environment" process takes too long, try removing `bioconductor-deepbluer` from the `environment.yml` and run the command again. Afterwards, run the command `conda install -c bioconda -n wg1 bioconductor-deepbluer` to install the Deepblue package separately.
 
-2. Run `conda activate wg1` to activate the environment.
+2. Run `conda activate tf_analyzer` to activate the environment.
 
-3. Run `pip install pyBigWig sklearn matplotlib kneed` to install additional required packages (this step will not be required in future versions).
-
-The newly created environment (`wg1`) needs to stay activated in order for the tool to work.
+The newly created environment (`tf_analyzer`) needs to stay activated in order for the tool to work.
 
 ## How to use
-The pipeline can be initiated by running `python bin/tf_analyser.py` with these arguments:
+The pipeline can be initiated by running `python bin/tf_analyzer.py` with these arguments:
 
 `-g, --genome` genome (default: hg19)
 
@@ -79,17 +83,17 @@ Use the help argument (`-h` or `--help`) to display a more detailed list of avai
 The results (plot images and CSV files) can be found in the `results` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`.
  
 ## Example case
-`python bin/tf_analyser.py -g hg19 -b GM12878 -t RELA -c chr1`
+`python bin/tf_analyzer.py -g hg19 -b kidney -t AR -c chr1`
 
-This command will download and analyse all data for transcription factor RELA, sampled from chromosome 1 of the biosource GM12878.
+This command will download and analyze all data for transcription factor "AR", a known activator, sampled from chromosome 1 of the biosource "kidney".
 
 **Results**
 
-For each transcription factor analysed in the process, a set of three figures will be exported:
+For each transcription factor analyzed in the process, a set of three figures will be exported:
 
 <img src="docs/img/rela1.png" width="500">
 
-Density Scatter Plot: This scatter plot contains the means of the ATAC Scores on the x-axis and the ChIP Scores on the y-axis. The histograms on both axes are showing the distribution of respective ATAC/ChIP scores. This plot also contains a heatmap, which shows the densities of the values used. (Zooming in may be required to see the details.)
+Density Scatter Plot: This scatter plot contains the means of the ATAC scores on the x-axis and the ChIP scores on the y-axis. The histograms on both axes are showing the distribution of respective ATAC/ChIP scores. This plot also contains a heatmap, which shows the densities of the values used. (Zooming in may be required to see the details.)
 
 <img src="docs/img/rela4.png" width="500">
 
