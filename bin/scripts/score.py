@@ -10,10 +10,10 @@ import os
 import scripts.repository
 
 
-def findarea(w, genom, biosource_ls, tf_ls, chr_list, redo_analysis):
+def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath, redo_analysis):
     # path to pickledata
     picklepath = os.path.abspath(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data', 'pickledata'))
+        os.path.join(outpath, 'data', 'pickledata'))
 
     exist = False
 
