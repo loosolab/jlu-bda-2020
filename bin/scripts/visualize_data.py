@@ -151,6 +151,7 @@ class VisualizeData:
             figure_path = os.path.join(self.path_plots, "Contour_" + tf_id + ".svg")
             plt.savefig(figure_path, format="svg")
             vil_fig_path = os.path.join(self.path_visualization, "Contour_" + tf_id + ".svg")
+            plt.savefig(vil_fig_path, format="svg")
             plt.show()
             
             return z
