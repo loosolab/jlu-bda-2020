@@ -29,6 +29,7 @@ import os
 import pandas as pd
 import numpy
 import pyBigWig
+import logging
 
 
 def normalize_all(linkage_table_path):
@@ -39,10 +40,17 @@ def normalize_all(linkage_table_path):
     :param linkage_table_path: String with path to linkage table .csv
            file containing the files that are part of the current analysis run.
     """
-    linkage_table = pd.read_csv(linkage_table_path, sep=';')
+    if os.path.exists(linkage_table_path):
+        linkage_table = pd.read_csv(linkage_table_path, sep=';')
+    else:
+        raise FileNotFoundError(
+            "The file {} does not exist or the file path is incorrect.".format(
+                linkage_table_path))
+
     file_paths = list(linkage_table["file_path"])
-    column_names= list(linkage_table["format"])
+    column_names = list(linkage_table["format"])
     log_file_paths = []
+    excluded_files = []
     min_value = math.inf
     max_value = -math.inf
 
@@ -56,29 +64,57 @@ def normalize_all(linkage_table_path):
             try:
                 log_file_path = log_scale_file(file_paths[i], column_names[i])
             except FileNotFoundError:
-                # Add logging
+                logging.error('The following Error has occurred while calling '
+                              'log_scale_file() : The file {} does not exist or'
+                              ' the file path is incorrect. The file has been '
+                              'excluded from the normalisation '
+                              'process.'.format(file_paths[i]))
                 excluded_files.append(i)
             except RuntimeError as err:
-                # Add logging
+                logging.error('The following Error has occurred while calling '
+                              'log_scale_file: \"{}\"'.format(err) + ' for '
+                              'the following file: \"{}\"'.format(
+                               file_paths[i]))
                 excluded_files.append(i)
         else:
             excluded_files.append(i)
-            raise FileNotFoundError(
-                "The file {} does not exist or the file path is "
-                "incorrect.".format(file_paths[i]))
+            logging.error("The file {} does not exist or the file path is "
+                          "incorrect and it has been excluded from "
+                          "normalisation.".format(file_paths[i]))
 
         if log_file_path is not None:
             log_file_paths.append(log_file_path)
 
-    # Find global min and global max values
-    for log_path in log_file_paths:
-        min_value, max_value = get_min_max(log_path, min_val=min_value,
-                                           max_val=max_value)
+    if len(log_file_paths) > 0:
+        # Find global min and global max values
+        for log_path in log_file_paths:
+            try:
+                min_value, max_value = get_min_max(log_path, min_val=min_value,
+                                                   max_val=max_value)
+            except RuntimeError as err:
+                logging.error('The following error has occured while calling '
+                              'the method get_min_max() for the file {}: '
+                              .format(log_path) + '{}'.format(err))
 
-    # Min-max-scale all files
-    for j in range(0, len(file_paths)):
-        min_max_scale_file(file_paths[j], log_file_paths[j], min_value,
-                           max_value, column_names=column_names[j])
+        # Min-max-scale all files
+        for j in range(0, len(file_paths)):
+            if j not in excluded_files:
+                try:
+                    min_max_scale_file(file_paths[j], log_file_paths[j],
+                                       min_value, max_value,
+                                       column_names=column_names[j])
+                except RuntimeError as err:
+                    logging.error(
+                        'The following error has occured while calling '
+                        'the method min_max_scale_file() for the file {}: '
+                        .format(file_paths[j]) + '{}'.format(err))
+
+        # Add output: str(len(file_paths) - len(excluded_files) + ' of' +
+        # str(len(file_paths)) + ' were normalised.'
+
+    else:
+        logging.warning("No files were normalized.")
+    # Add output: 'No files were normalised.'
 
 
 def log_scale_file(file_path, column_names=None):
@@ -94,54 +130,61 @@ def log_scale_file(file_path, column_names=None):
            None, if not given
     :return: log_file_path: String containing path to log-scaled file
     """
-    log_file_path = file_path + ".ln"
+    if os.path.exists(file_path):
 
-    if is_big_wig(file_path):
-        bw = pyBigWig.open(file_path)
-        chrs = bw.chroms()
-        header = list(chrs.items())
-        bw_log = pyBigWig.open(log_file_path, 'w')
-        bw_log.addHeader(header)
+        log_file_path = file_path + ".ln"
 
-        for chrom in chrs.keys():
-            intervals = bw.intervals(chrom)
-            chromosomes = [chrom] * len(intervals)
-            starts = [interval[0] for interval in intervals]
-            ends = [interval[1] for interval in intervals]
-            # Make sure there are no 0s in array before attempting
-            # log-scaling while getting signal values
+        if is_big_wig(file_path):
+            bw = pyBigWig.open(file_path)
+            chrs = bw.chroms()
+            header = list(chrs.items())
+            bw_log = pyBigWig.open(log_file_path, 'w')
+            bw_log.addHeader(header)
+
+            for chrom in chrs.keys():
+                intervals = bw.intervals(chrom)
+                chromosomes = [chrom] * len(intervals)
+                starts = [interval[0] for interval in intervals]
+                ends = [interval[1] for interval in intervals]
+                # Make sure there are no 0s in array before attempting
+                # log-scaling while getting signal values
+                # if there are, replace them with '1' so the value after scaling
+                # will be 0
+                signal_values = [interval[2] if interval[2] != 0 else 1 for
+                                 interval in intervals]
+                log_values = numpy.log(signal_values)
+                bw_log.addEntries(chromosomes, starts, ends=ends,
+                                  values=log_values)
+
+            bw.close()
+            bw_log.close()
+
+        else:
+            idx = get_value_index(column_names)
+
+            # check if file has a header that would interfere with using
+            # numpy.loadtxt() and skip first row in file if so
+            with open(file_path, 'r') as file:
+                first_line = file.readline()
+            skip_rows = 0 if is_float(first_line.split('\t')[idx]) else 1
+
+            signal_values = numpy.loadtxt(file_path, usecols=[idx],
+                                          skiprows=skip_rows)
+            # Make sure there are no 0s in array before attempting log-scaling
             # if there are, replace them with '1' so the value after scaling
             # will be 0
-            signal_values = [interval[2] if interval[2] != 0 else 1 for
-                             interval in intervals]
+            signal_values[signal_values == 0] = 1
             log_values = numpy.log(signal_values)
-            bw_log.addEntries(chromosomes, starts, ends=ends, values=log_values)
+            log_values = [str(value) + "\n" for value in log_values]
 
-        bw.close()
-        bw_log.close()
+            with open(log_file_path, 'w') as log_file:
+                log_file.writelines(log_values)
 
+        return log_file_path
     else:
-        idx = get_value_index(column_names)
-
-        #check if file has a header that would interfere with using
-        # numpy.loadtxt() and skip first row in file if needed
-        with open(file_path, 'r') as file:
-            first_line = file.readline()
-        skip_rows = 0 if is_float(first_line.split('\t')[-1]) else 1
-
-        signal_values = numpy.loadtxt(file_path, usecols=[idx],
-                                      skiprows=skip_rows)
-        # Make sure there are no 0s in array before attempting log-scaling
-        # if there are, replace them with '1' so the value after scaling
-        # will be 0
-        signal_values[signal_values == 0] = 1
-        log_values = numpy.log(signal_values)
-        log_values = [str(value) + "\n" for value in log_values]
-
-        with open(log_file_path, 'w') as log_file:
-            log_file.writelines(log_values)
-
-    return log_file_path
+        raise FileNotFoundError(
+            "The file {} does not exist or the file path is incorrect.".format(
+                file_path))
 
 
 def get_min_max(log_file_path, min_val=math.inf, max_val=-math.inf):
@@ -203,7 +246,7 @@ def min_max_scale_file(file_path, log_file_path, min_val,
             min_max_values = [(interval[2] - min_val) / (max_val - min_val) for
                               interval in log_intervals]
             min_max_bw.addEntries(chromosomes, starts, ends=ends,
-                              values=min_max_values)
+                                  values=min_max_values)
 
         bw.close()
         log_bw.close()
@@ -220,7 +263,7 @@ def min_max_scale_file(file_path, log_file_path, min_val,
         # to tmp file and then start printing files with values
         with open(file_path, 'r') as file:
             first_line = file.readline()
-        skip_rows = False if is_float(first_line.split('\t')[-1]) else True
+        skip_rows = False if is_float(first_line.split('\t')[idx]) else True
 
         with open(file_path, 'r') as file, open(tmp_file_path, 'w') as tmp_file:
             if skip_rows:
@@ -246,7 +289,7 @@ def get_value_index(column_names):
              file
     """
     column_names = column_names.split(',')
-    
+
     if "SIGNAL_VALUE" in column_names:
         index = column_names.index("SIGNAL_VALUE")
     else:
@@ -264,6 +307,10 @@ def is_big_wig(file_path):
     """
     try:
         file_ext = os.path.splitext(file_path)[1].lower()
+        if file_ext == '.ln':
+            file_path_stripped = os.path.splitext(file_path)[0]
+            file_ext = os.path.splitext(file_path_stripped)[1].lower()
+
         if file_ext == '.bw' or file_ext == '.bigwig':
             bw = pyBigWig.open(file_path)
             is_bw = bw.isBigWig()
@@ -271,9 +318,9 @@ def is_big_wig(file_path):
             return is_bw
         else:
             return False
+
     except RuntimeError:
         return False
-    # option for logging here
 
 
 def is_float(value):
