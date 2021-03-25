@@ -277,7 +277,8 @@ def min_max_scale_file(file_path, log_file_path, min_val,
 
         with open(file_path, 'r') as file, open(tmp_file_path, 'w') as tmp_file:
             if skip_rows:
-                tmp_file.write(file.readline().strip())
+                row = file.readline().strip() + '\n'
+                tmp_file.write(row)
 
             for line in file:
                 line_split = line.strip().split("\t")
