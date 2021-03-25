@@ -130,10 +130,10 @@ touch "$new_link"
 export new_filename=""
 
 # move chrom.sizes to proper folder
-mv "$source_path"/*.chrom.sizes "$chrom_path"
+mv "$source_path"/*.chrom.sizes "$chrom_path" &>/dev/null
 # Strip .txt ending of downloaded files
-rename s/'.txt'// $source_path/*.txt # TODO: error when doublequoting source_path/*
-rename s/'.meta'/'.meta.txt'/ $source_path/*.meta
+rename s/'.txt'// $source_path/*.txt &>/dev/null # TODO: error when doublequoting source_path/*
+rename s/'.meta'/'.meta.txt'/ $source_path/*.meta &>/dev/null
 
 #Merge atac-seq chunks
 merge_chunks "$source_path"
