@@ -9,7 +9,7 @@ from scripts.repository import Repository
 from scripts.components_fit import GmFit
 from scripts.visualize_data import VisualizeData as VD
 from scripts.ema import EMA
-from scripts.modifyCSV import modifyCSV 
+from scripts.modify_csv import modifyCSV 
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
