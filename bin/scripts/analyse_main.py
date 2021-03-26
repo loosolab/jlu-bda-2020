@@ -136,7 +136,7 @@ class TF_analyser:
                 single_result = EMA().emAnalyse(distribution, self.n_components)
                
                 single_result.insert(0,'tf',tf)
-                single_result.insert(0,'chr',self.chr)
+                single_result.insert(0,'chr', "".join(self.chr))
                 single_result.insert(0,'biosource',biosource)
                 single_result.insert(0, 'mode', mode)
                 single_result.insert(0,'width', self.width)
