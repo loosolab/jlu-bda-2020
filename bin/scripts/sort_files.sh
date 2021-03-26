@@ -59,7 +59,6 @@ do
 	line="$experiment_id;$genome;$biosource;$technique;$epigenetic_mark;\
 $chromosome;$filename;$data_type;$newfile;$remaining"
 	if ! grep -Fxq "$line" "$new_link"; then
-	echo "$experiment_id;$genome;$biosource;$technique;$epigenetic_mark;\
-$chromosome;$filename;$data_type;$newfile;$remaining" >> "$new_link"
+		echo "$line" >> "$new_link"
 	fi
 done < <(tail -n +2 "$csv_path")
