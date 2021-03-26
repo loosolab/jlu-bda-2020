@@ -45,7 +45,8 @@ def normalize_all(linkage_table_path):
     print("Reading in linkage table {0}".format(memory_usage()))
 
     if os.path.exists(linkage_table_path):
-        linkage_table = pd.read_csv(linkage_table_path, sep=';')
+        linkage_table = pd.read_csv(linkage_table_path, sep=';',
+                                    index_col=False)
     else:
         raise FileNotFoundError(
             "The file {} does not exist or the file path is incorrect.".format(
@@ -70,30 +71,38 @@ def normalize_all(linkage_table_path):
         log_file_path = None
 
         if os.path.exists(file_paths[i]):
-            print("- Log-scaling {0} {1}".format(file_paths[i], memory_usage()))
-            try:
-                log_file_path = log_scale_file(file_paths[i], column_names[i])
-            except FileNotFoundError:
-                logging.error('The following Error has occurred while calling '
-                              'log_scale_file() : The file {} does not exist or'
-                              ' the file path is incorrect. The file has been '
-                              'excluded from the normalisation '
-                              'process.'.format(file_paths[i]))
-                excluded_files.append(i)
-                log_file_path = None
-            except (RuntimeError, UnicodeDecodeError) as err:
-                logging.error('The following Error has occurred while calling '
-                              'log_scale_file: \"{}\"'.format(err) + ' for '
-                              'the following file: \"{}\"'.format(
-                               file_paths[i]))
-                excluded_files.append(i)
-                log_file_path = None
-            except:
-                logging.error("The following error occurred while tryign to "
-                              "read normalize the file {}: ".format(
-                               file_paths[i]) + "{}".format(sys.exc_info()[0]))
-                excluded_files.append(i)
-                log_file_path = None
+            if os.path.exists(file_paths[i] + '.ln'):
+                log_file_path = file_paths[i] + '.ln'
+            else:
+                print("- Log-scaling {0} {1}".format(file_paths[i],
+                                                     memory_usage()))
+                try:
+                    log_file_path = log_scale_file(file_paths[i],
+                                                   column_names[i])
+                except FileNotFoundError:
+                    logging.error(
+                        'The following Error has occurred while calling '
+                        'log_scale_file() : The file {} does not exist or'
+                        ' the file path is incorrect. The file has been '
+                        'excluded from the normalisation '
+                        'process.'.format(file_paths[i]))
+                    excluded_files.append(i)
+                    log_file_path = None
+                except (RuntimeError, UnicodeDecodeError) as err:
+                    logging.error(
+                        'The following Error has occurred while calling '
+                        'log_scale_file: \"{}\"'.format(err) + ' for '
+                                                               'the following file: \"{}\"'.format(
+                            file_paths[i]))
+                    excluded_files.append(i)
+                    log_file_path = None
+                except:
+                    logging.error(
+                        "The following error occurred while tryign to "
+                        "normalize the file {}: ".format(file_paths[i]) +
+                        "{}".format(sys.exc_info()[0]))
+                    excluded_files.append(i)
+                    log_file_path = None
         else:
             excluded_files.append(i)
             logging.error("The file {} does not exist or the file path is "
@@ -134,8 +143,8 @@ def normalize_all(linkage_table_path):
     if len(file_paths) > len(excluded_files):
         print(str(len(file_paths) - len(excluded_files)) + " of " +
               str(len(file_paths)) + "files were successfully normalised. If "
-              "not all files were normalised, check logging for further "
-              "information.")
+                                     "not all files were normalised, check logging for further "
+                                     "information.")
     else:
         logging.warning("0 files were normalized.")
 
@@ -169,19 +178,50 @@ def log_scale_file(file_path, column_names=None):
             bw_log.addHeader(header)
 
             for chrom in chrs.keys():
-                intervals = bw.intervals(chrom)
-                chromosomes = [chrom] * len(intervals)
-                starts = [interval[0] for interval in intervals]
-                ends = [interval[1] for interval in intervals]
-                # Make sure there are no 0s in array before attempting
-                # log-scaling while getting signal values
-                # if there are, replace them with '1' so the value after scaling
-                # will be 0
-                signal_values = [interval[2] if interval[2] != 0 else 1 for
-                                 interval in intervals]
-                log_values = numpy.log(signal_values)
-                bw_log.addEntries(chromosomes, starts, ends=ends,
-                                  values=log_values)
+                frst_interval = bw.intervals(chrom, 0, 1)[0]
+
+                # Check if file contains values, else raise error
+                if frst_interval is None:
+                    raise RuntimeError("The file {} does not contain any "
+                                    "values.".format(file_path))
+                # Write first interval to log file
+                bw_log.addEntries([chrom], [0], ends=[frst_interval[1]],
+                                  values=[math.log(frst_interval[2])])
+
+                # Set start, stop and step size for intervals in following loop
+                start = frst_interval[1]
+                step = 10000000
+                stop = start + step if start + step < chrs[chrom] else \
+                    chrs[chrom]
+
+                while True:
+                    intervals = bw.intervals(chrom, start, stop)
+                    # Skip empty intervals
+                    if intervals is None:
+                        continue
+
+                    chromosomes = [chrom] * len(intervals)
+                    starts = [interval[0] for interval in intervals]
+                    ends = [interval[1] for interval in intervals]
+
+                    # Make sure there are no 0s in array before attempting
+                    # log-scaling while getting signal values
+                    # if there are, replace them with '1' so the value after
+                    # scaling will be 0
+                    signal_values = [interval[2] if interval[2] != 0 else 1 for
+                                     interval in intervals]
+                    log_values = numpy.log(signal_values)
+                    bw_log.addEntries(chromosomes, starts, ends=ends,
+                                      values=log_values)
+
+                    # Check if stop equals the end of the chromosome and if
+                    # it does, break the loop
+                    if stop == chrs[chrom]:
+                        break
+
+                    start = ends[-1]
+                    stop = start + step if start + step < chrs[chrom] else \
+                        chrs[chrom]
 
             bw.close()
             bw_log.close()
@@ -258,26 +298,57 @@ def min_max_scale_file(file_path, log_file_path, min_val,
 
     if is_big_wig(file_path) and is_big_wig(log_file_path):
         bw = pyBigWig.open(file_path)
-        log_bw = pyBigWig.open(log_file_path)
+        bw_log = pyBigWig.open(log_file_path)
         chrs = bw.chroms()
         header = list(chrs.items())
-        min_max_bw = pyBigWig.open(tmp_file_path, 'w')
-        min_max_bw.addHeader(header)
+        bw_min_max = pyBigWig.open(tmp_file_path, 'w')
+        bw_min_max.addHeader(header)
 
         for chrom in chrs.keys():
-            intervals = bw.intervals(chrom)
-            log_intervals = log_bw.intervals(chrom)
-            chromosomes = [chrom] * len(intervals)
-            starts = [interval[0] for interval in intervals]
-            ends = [interval[1] for interval in intervals]
-            min_max_values = [(interval[2] - min_val) / (max_val - min_val) for
-                              interval in log_intervals]
-            min_max_bw.addEntries(chromosomes, starts, ends=ends,
-                                  values=min_max_values)
+            frst_interval = bw.intervals(chrom, 0, 1)[0]
+            frst_log_interval = bw_log.intervals(chrom, 0, 1)[0]
+
+            # Write first interval to log file
+            bw_min_max.addEntries([chrom], [0], ends=[frst_interval[1]],
+                                  values=[(frst_log_interval[2] - min_val) /
+                                          (max_val - min_val)])
+
+            # Set start, stop and step size for intervals in following loop
+            start = frst_interval[1]
+            step = 10000000
+            stop = start + step if start + step < chrs[chrom] else \
+                chrs[chrom]
+
+            while True:
+                intervals = bw.intervals(chrom, start, stop)
+                log_intervals = bw_log.intervals(chrom, start, stop)
+
+                # Skip empty intervals
+                if intervals is None:
+                    continue
+
+                chromosomes = [chrom] * len(intervals)
+                starts = [interval[0] for interval in intervals]
+                ends = [interval[1] for interval in intervals]
+
+                # Min-max scale the log-scaled values
+                min_max_values = [(interval[2] - min_val) / (max_val - min_val)
+                                  for interval in log_intervals]
+                bw_min_max.addEntries(chromosomes, starts, ends=ends,
+                                      values=min_max_values)
+
+                # Check if stop equals the end of the chromosome and if
+                # it does, break the loop
+                if stop == chrs[chrom]:
+                    break
+
+                start = ends[-1]
+                stop = start + step if start + step < chrs[chrom] else \
+                    chrs[chrom]
 
         bw.close()
-        log_bw.close()
-        min_max_bw.close()
+        bw_log.close()
+        bw_min_max.close()
 
     else:
         log_values = numpy.loadtxt(log_file_path, usecols=[0])
