@@ -31,6 +31,16 @@ import numpy
 import pyBigWig
 import logging
 
+import psutil
+
+def memory_usage():
+    """ Returns a string telling the current RAM usage in GB and percent """
+    v = psutil.virtual_memory()
+    d = v._asdict()
+    
+    s = "(RAM usage: {0:.2f}GB ({1}%))".format(d["used"]/(1024.0 ** 3), d["percent"])
+    return(s)
+
 
 def normalize_all(linkage_table_path):
     """
@@ -40,6 +50,8 @@ def normalize_all(linkage_table_path):
     :param linkage_table_path: String with path to linkage table .csv
            file containing the files that are part of the current analysis run.
     """
+
+    print("Reading in linkage table {0}".format(memory_usage()))
     if os.path.exists(linkage_table_path):
         linkage_table = pd.read_csv(linkage_table_path, sep=';')
     else:
@@ -58,13 +70,19 @@ def normalize_all(linkage_table_path):
     print("Now starting normalisation process. " + str(len(file_paths)) +
           " files will be normalised.")
 
+
     # Check all files to see if they have been log-scaled before or not.
     # If they have, then add path of existing .ln file to log_file_paths,
     # else log-scale and then add new path
+    print("------ Log scaling files ------")
     for i in range(0, len(file_paths)):
         log_file_path = None
-
+        
+        
         if os.path.exists(file_paths[i]):
+            
+            print("- Log-scaling {0} {1}".format(file_paths[i], memory_usage()))
+
             try:
                 log_file_path = log_scale_file(file_paths[i], column_names[i])
             except FileNotFoundError:
@@ -80,6 +98,7 @@ def normalize_all(linkage_table_path):
                               'the following file: \"{}\"'.format(
                                file_paths[i]))
                 excluded_files.append(i)
+        
         else:
             excluded_files.append(i)
             logging.error("The file {} does not exist or the file path is "
@@ -89,9 +108,14 @@ def normalize_all(linkage_table_path):
         if log_file_path is not None:
             log_file_paths.append(log_file_path)
 
+    
     if len(log_file_paths) > 0:
+
+        print("------ Finding global min/max values ------")
         # Find global min and global max values
         for log_path in log_file_paths:
+            print("- {0} {1}".format(log_path, memory_usage()))
+
             try:
                 min_value, max_value = get_min_max(log_path, min_val=min_value,
                                                    max_val=max_value)
@@ -101,8 +125,12 @@ def normalize_all(linkage_table_path):
                               .format(log_path) + '{}'.format(err))
 
         # Min-max-scale all files
+        print("------ Min-max scaling all files -------")
         for j in range(0, len(file_paths)):
             if j not in excluded_files:
+
+                print("- {0} {1}".format(file_paths[j], memory_usage()))
+
                 try:
                     min_max_scale_file(file_paths[j], log_file_paths[j],
                                        min_value, max_value,
@@ -144,6 +172,10 @@ def log_scale_file(file_path, column_names=None):
 
         log_file_path = file_path + ".ln"
 
+        #Check if path already exists
+        if os.path.exists(log_file_path):
+            return(log_file_path)
+
         if is_big_wig(file_path):
             bw = pyBigWig.open(file_path)
             chrs = bw.chroms()
@@ -156,11 +188,11 @@ def log_scale_file(file_path, column_names=None):
                 chromosomes = [chrom] * len(intervals)
                 starts = [interval[0] for interval in intervals]
                 ends = [interval[1] for interval in intervals]
-                # Make sure there are no 0s in array before attempting
+                # Make sure there are no 0s or negative values in array before attempting
                 # log-scaling while getting signal values
                 # if there are, replace them with '1' so the value after scaling
                 # will be 0
-                signal_values = [interval[2] if interval[2] != 0 else 1 for
+                signal_values = [interval[2] if interval[2] > 0 else 1 for
                                  interval in intervals]
                 log_values = numpy.log(signal_values)
                 bw_log.addEntries(chromosomes, starts, ends=ends,
@@ -195,6 +227,7 @@ def log_scale_file(file_path, column_names=None):
                 log_file.writelines(log_values)
 
         return log_file_path
+
     else:
         raise FileNotFoundError(
             "The file {} does not exist or the file path is incorrect.".format(
