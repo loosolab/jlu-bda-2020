@@ -31,6 +31,7 @@ import numpy
 import pyBigWig
 import logging
 import sys
+import psutil
 
 
 def normalize_all(linkage_table_path):
@@ -41,6 +42,8 @@ def normalize_all(linkage_table_path):
     :param linkage_table_path: String with path to linkage table .csv
            file containing the files that are part of the current analysis run.
     """
+    print("Reading in linkage table {0}".format(memory_usage()))
+
     if os.path.exists(linkage_table_path):
         linkage_table = pd.read_csv(linkage_table_path, sep=';')
     else:
@@ -62,10 +65,12 @@ def normalize_all(linkage_table_path):
     # Check all files to see if they have been log-scaled before or not.
     # If they have, then add path of existing .ln file to log_file_paths,
     # else log-scale and then add new path
+    print("------ Log scaling files ------")
     for i in range(0, len(file_paths)):
         log_file_path = None
 
         if os.path.exists(file_paths[i]):
+            print("- Log-scaling {0} {1}".format(file_paths[i], memory_usage()))
             try:
                 log_file_path = log_scale_file(file_paths[i], column_names[i])
             except FileNotFoundError:
@@ -75,29 +80,33 @@ def normalize_all(linkage_table_path):
                               'excluded from the normalisation '
                               'process.'.format(file_paths[i]))
                 excluded_files.append(i)
+                log_file_path = None
             except (RuntimeError, UnicodeDecodeError) as err:
                 logging.error('The following Error has occurred while calling '
                               'log_scale_file: \"{}\"'.format(err) + ' for '
                               'the following file: \"{}\"'.format(
                                file_paths[i]))
                 excluded_files.append(i)
+                log_file_path = None
             except:
                 logging.error("The following error occurred while tryign to "
                               "read normalize the file {}: ".format(
                                file_paths[i]) + "{}".format(sys.exc_info()[0]))
                 excluded_files.append(i)
+                log_file_path = None
         else:
             excluded_files.append(i)
             logging.error("The file {} does not exist or the file path is "
                           "incorrect and it has been excluded from "
                           "normalisation.".format(file_paths[i]))
 
-        if log_file_path is not None:
-            log_file_paths.append(log_file_path)
+        log_file_paths.append(log_file_path)
 
-    if len(log_file_paths) > 0:
-        # Find global min and global max values
-        for log_path in log_file_paths:
+    # Find global min and global max values
+    print("------ Finding global min/max values ------")
+    for log_path in log_file_paths:
+        if log_path is not None:
+            print("- {0} {1}".format(log_path, memory_usage()))
             try:
                 min_value, max_value = get_min_max(log_path, min_val=min_value,
                                                    max_val=max_value)
@@ -106,27 +115,29 @@ def normalize_all(linkage_table_path):
                               'the method get_min_max() for the file {}: '
                               .format(log_path) + '{}'.format(err))
 
-        # Min-max-scale all files
-        for j in range(0, len(file_paths)):
-            if j not in excluded_files:
-                try:
-                    min_max_scale_file(file_paths[j], log_file_paths[j],
-                                       min_value, max_value,
-                                       column_names=column_names[j])
-                except RuntimeError as err:
-                    logging.error(
-                        'The following error has occurred while calling '
-                        'the method min_max_scale_file() for the file {}: '
-                        .format(file_paths[j]) + '{}'.format(err))
+    # Min-max-scale all files
+    print("------ Min-max scaling all files -------")
+    for j in range(0, len(file_paths)):
+        if j not in excluded_files:
+            print("- {0} {1}".format(file_paths[j], memory_usage()))
+            try:
+                min_max_scale_file(file_paths[j], log_file_paths[j],
+                                   min_value, max_value,
+                                   column_names=column_names[j])
+            except RuntimeError as err:
+                logging.error(
+                    'The following error has occurred while calling '
+                    'the method min_max_scale_file() for the file {}: '
+                    .format(file_paths[j]) + '{}'.format(err))
 
-        # Give update message for module's success
+    # Give update message for module's success
+    if len(file_paths) > len(excluded_files):
         print(str(len(file_paths) - len(excluded_files)) + " of " +
               str(len(file_paths)) + "files were successfully normalised. If "
               "not all files were normalised, check logging for further "
               "information.")
-
     else:
-        logging.warning("No files were normalized.")
+        logging.warning("0 files were normalized.")
 
         # Give update message for module's success
         print("Warning: No files were normalised. Please check logging for "
@@ -352,3 +363,13 @@ def is_float(value):
         return True
     except ValueError:
         return False
+
+
+def memory_usage():
+    """ Returns a string with the current RAM usage in GB and percent """
+    v = psutil.virtual_memory()
+    d = v._asdict()
+
+    s = "(RAM usage: {0:.2f}GB ({1}%))".format(d["used"] / (1024.0 ** 3),
+                                               d["percent"])
+    return s
