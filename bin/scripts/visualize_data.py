@@ -107,7 +107,7 @@ class VisualizeData:
             fig, ax = plt.subplots()
             ax.scatter(x, y, c=z, s=50, edgecolors='face')
             
-            ax.set(xlim=(0,100), ylim=(0,100))
+            ax.set(xlim=(0,1), ylim=(0,1))
             plt.xlabel("ATAC")
             plt.ylabel("Chip")
             # plt.colorbar()
