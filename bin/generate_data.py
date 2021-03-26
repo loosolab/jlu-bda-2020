@@ -60,10 +60,12 @@ class DataConfig:
         """ Recommended way to use this wrapper. Calls all needed functions.
         """
         self.generate_csv()
-        self.download_data()
-        self.validate_convert_files()
-        self.merge_forward_reverse()
-        self.sort_files()
+        if self.download_data():
+            self.validate_convert_files()
+            self.merge_forward_reverse()
+            self.sort_files()
+        else:
+            print("No new data was downloaded, skipping validation, merging and sorting.")
         self.normalize()
         self.generate_dictionaries()
 
@@ -101,11 +103,11 @@ class DataConfig:
         rc = subprocess.call([tool, "-i", csv, "-o", outdir])
         if rc == 2:
             logging.info("new new data was downloaded")
-            print("no new data was downloaded")
-            return
+            return False
         if rc != 0:
             logging.error("export_from_csv.r could not download data")
             raise Exception("export_from_csv.r could not download data")
+        return True
 
     def validate_convert_files(self):
         """ Validates filetypes and converts them to requested filetype if needed
