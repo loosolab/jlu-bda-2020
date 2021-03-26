@@ -43,6 +43,7 @@ dependencies:
   - natsort=7.1.1
   - tabulate=0.8.9
   - util-linux=2.36
+  - psutil=5.8.0
 ```
 
 2. Run `conda activate tf_analyzer` to activate the environment. This needs to stay activated in order for the tool to work.
@@ -80,10 +81,12 @@ The following (optional) arguments will not initiate the pipeline but display in
 
 Use the help argument (`-h` or `--help`) to display a more detailed list of available arguments.
 
+**Note:** Please note that all arguments must be written in *lower case* letters. Multiple arguments (where applicable) must be divided by spaces (e.g. `-b "kidney" "huvec cell" "regulatory t cell"`).
+
 The results can be found in the `plots` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`. If the application is launched through a virtual machine, it can be accessed locally via SSH (`ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server`).
  
 ## Example case
-`python bin/tf_analyzer.py -g hg19 -b kidney -t AR -c chr1`
+`python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr1`
 
 This command will download and analyze all data for transcription factor "AR", a known activator, sampled from chromosome 1 of the biosource "kidney".
 
