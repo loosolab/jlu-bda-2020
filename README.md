@@ -80,7 +80,7 @@ The following (optional) arguments will not initiate the pipeline but display in
 
 Use the help argument (`-h` or `--help`) to display a more detailed list of available arguments.
 
-The results (plot images and CSV files) can be found in the `results` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`.
+The results can be found in the `plots` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`. If the application is launched through a virtual machine, it can be accessed locally via SSH (`ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server`).
  
 ## Example case
 `python bin/tf_analyzer.py -g hg19 -b kidney -t AR -c chr1`
