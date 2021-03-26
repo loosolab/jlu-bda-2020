@@ -54,10 +54,10 @@ do
 
 	mkdir -p "$new_path"
 	sourcefile="$source_path/$filename"
-	newfile="$new_path/$filename"
-	mv "$sourcefile" "$newfile"
+	file_path="$new_path/$filename"
+	mv "$sourcefile" "$file_path"
 	line="$experiment_id;$genome;$biosource;$technique;$epigenetic_mark;\
-$chromosome;$filename;$data_type;$newfile;$remaining"
+$chromosome;$filename;$data_type;$file_path;$remaining"
 	if ! grep -Fxq "$line" "$new_link"; then
 		echo "$line" >> "$new_link"
 	fi
