@@ -30,6 +30,7 @@ import pandas as pd
 import numpy
 import pyBigWig
 import logging
+import sys
 
 
 def normalize_all(linkage_table_path):
@@ -79,6 +80,11 @@ def normalize_all(linkage_table_path):
                               'log_scale_file: \"{}\"'.format(err) + ' for '
                               'the following file: \"{}\"'.format(
                                file_paths[i]))
+                excluded_files.append(i)
+            except:
+                logging.error("The following error occurred while tryign to "
+                              "read normalize the file {}: ".format(
+                               file_paths[i]) + "{}".format(sys.exc_info()[0]))
                 excluded_files.append(i)
         else:
             excluded_files.append(i)
