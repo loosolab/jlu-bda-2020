@@ -92,8 +92,7 @@ def normalize_all(linkage_table_path):
                     logging.error(
                         'The following Error has occurred while calling '
                         'log_scale_file: \"{}\"'.format(err) + ' for '
-                                                               'the following file: \"{}\"'.format(
-                            file_paths[i]))
+                        'the following file: \"{}\"'.format(file_paths[i]))
                     excluded_files.append(i)
                     log_file_path = None
                 except:
@@ -178,12 +177,14 @@ def log_scale_file(file_path, column_names=None):
             bw_log.addHeader(header)
 
             for chrom in chrs.keys():
-                frst_interval = bw.intervals(chrom, 0, 1)[0]
-
                 # Check if file contains values, else raise error
+                frst_interval = bw.intervals(chrom, 0, 1)
                 if frst_interval is None:
                     raise RuntimeError("The file {} does not contain any "
                                     "values.".format(file_path))
+
+                frst_interval = bw.intervals(chrom, 0, 1)[0]
+
                 # Write first interval to log file
                 bw_log.addEntries([chrom], [0], ends=[frst_interval[1]],
                                   values=[math.log(frst_interval[2])])
