@@ -29,11 +29,6 @@ if [ ! -f "$new_link" ]; then
 	echo "$headers" > "$new_link"
 fi
 
-# arrays used to create normalization.csv later on
-declare -a biosources=()
-declare -a chromosomes=()
-declare -a epigenetic_marks=()
-
 #===============================================================================
 # Goes through all lines of the .csv and sorts the files according to the
 # sequencing technique, skipping non existing files to clean up the .csv .
@@ -45,16 +40,6 @@ do
 	if [ ! -e "$source_path/$filename" ]; then
 		continue
 	fi
-	if [[ ! " ${biosources[*]} " =~  ${biosource} ]]; then
-   		biosources+=("$biosource")
-	fi
-	if [[ ! " ${chromosomes[*]} " =~  ${chromosome} ]]; then
-   		chromosomes+=("$chromosome")
-	fi
-	if [[ ! " ${epigenetic_marks[*]} " =~  ${epigenetic_mark} ]]; then
-   		epigenetic_marks+=("$epigenetic_mark")
-	fi
-
 	# lowercase comparison to ensure
 	check=$(echo "$technique" | awk '{print tolower($0)}')
 	if [ "$check" == "atac-seq" ]; then
@@ -78,24 +63,3 @@ $chromosome;$filename;$data_type;$newfile;$remaining"
 $chromosome;$filename;$data_type;$newfile;$remaining" >> "$new_link"
 	fi
 done < <(tail -n +2 "$csv_path")
-
-#===============================================================================
-# Create linking table for normalization in /temp
-#===============================================================================
-csv=$source_path/normalization.csv
-echo "$headers" > "$csv"
-for lt in "$dest_path"/*.csv
-do
-	while IFS=";" read -r experiment_id	genome	biosource	technique	\
-		epigenetic_mark	chromosome remaining
-	do
-	if [[  " ${biosources[*]} " =~  ${biosource} ]]; then
-   		if [[  " ${chromosomes[*]} " =~  ${chromosome} ]]; then
-   			if [[  " ${epigenetic_marks[*]} " =~  ${epigenetic_mark} ]]; then
-					echo "$experiment_id;$genome;$biosource;$technique;\
-$epigenetic_mark;$chromosome;$remaining" >> "$csv"
-			fi
-		fi
-	fi
-	done < <(tail -n +2 "$lt")
-done

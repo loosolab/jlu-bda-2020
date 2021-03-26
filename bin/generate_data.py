@@ -1,6 +1,7 @@
 import subprocess
 import os
 import logging
+from csv import reader, writer
 from datetime import datetime
 from scripts.merge_reads import merge_all
 from scripts.generate_pickle import parse
@@ -161,12 +162,32 @@ class DataConfig:
 
     def normalize(self):
         """ Normalize files to allow proper analysis
-
+        Creates a normalize.csv and then
         Calls scripts.normalize and handles return value
 
         """
-        csv = os.path.join(self.outpath, "data", "temp", "normalization.csv")
-        normalize_all(csv)
+        data = os.path.join(self.outpath, "data")
+        norm_csv = os.path.join(data, "temp", "normalization.csv")
+        set_header = False
+        with open(norm_csv, 'w', newline='') as csvfile:
+            outcsv = writer(csvfile, delimiter=';')
+            for file in os.listdir(data):
+                if file.endswith(".csv"):
+                    with open(os.path.join(data, file), 'r') as csv:
+                        csv_reader = reader(csv, delimiter=';')
+                        header = next(csv_reader)
+                        if not set_header:
+                            outcsv.writerow(header)
+                            set_header = True
+                        genome = header.index("genome")
+                        biosource = header.index("biosource")
+                        chromosome = header.index("chromosome")
+                        for row in csv_reader:
+                            if (row[genome] in self.genome and
+                                row[biosource] in self.biosource and
+                                    row[chromosome] in self.chromosome):
+                                outcsv.writerow(row)
+        normalize_all(norm_csv)
 
     def generate_dictionaries(self):
         """Generate pickle files for the downloaded data """
