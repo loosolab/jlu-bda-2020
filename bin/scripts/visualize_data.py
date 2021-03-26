@@ -37,7 +37,7 @@ class VisualizeData:
             path_scripts = os.path.dirname(__file__)
             path_bin = os.path.split(path_scripts)
             path_main = os.path.split(path_bin[0])
-            self.path_visualization = os.path.join(path_main[0], "visualization/assests/img/", biosource +"_"+ genome, tf_id + "_" + chromosome)
+            self.path_visualization = os.path.join(path_main[0], "visualization","assests","img", biosource +"_"+ genome, tf_id + "_" + "".join(chromosome))
             try:
                 os.makedirs(self.path_plots)
             except:
@@ -151,7 +151,7 @@ class VisualizeData:
             # ax.plot_surface(x, y, z, color='b')
             figure_path = os.path.join(self.path_plots, "Contour_" + tf_id + ".svg")
             plt.savefig(figure_path, format="svg")
-            vil_fig_path = os.path.join(self.path_visualization, "Contour_" + tf_id + "_" + self.chromosome +".svg")
+            vil_fig_path = os.path.join(self.path_visualization, "Contour_" + tf_id + "_" + "".join(self.chromosome) +".svg")
             plt.savefig(vil_fig_path, format="svg")
             plt.show()
             
