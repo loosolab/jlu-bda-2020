@@ -34,6 +34,7 @@ def getTreeData():
 # =============================================================================
 
 @app.route('/getRawData', methods=["POST"])
+@cross_origin()
 def getRawData():
     request_data = request.get_json()
     return api_calls.getRawData(api_calls.getChecked(request_data))
