@@ -49,7 +49,7 @@ def main():
         genome_choices = [genome[1].lower() for genome in server.list_genomes(user_key)[1]]
         genome_choices.sort()
 
-        biosource_choices = [biosource[1].lower() for biosource in server.list_biosources(None, user_key)[1]]
+        biosource_choices = [biosource[1].lower().replace("'","\\'") for biosource in server.list_biosources(None, user_key)[1]]
         biosource_choices.append('all')
         biosource_choices.sort()
 
@@ -166,6 +166,8 @@ def main():
         if 'all' in args.biosource:
             args.biosource = biosource_choices
             args.biosource.remove('all')
+        else:
+            args.biosource = [x.replace("'","\\'") for x in args.biosource]
 
         if 'all' in args.tf:
             args.tf = [x for x in tf_choices if x != "all"]
