@@ -5,7 +5,7 @@ Created on Wed Mar 24 17:56:52 2021
 
 @author: jan
 """
-from repository import Repository as rp
+from scripts.repository import Repository as rp
 import pandas as pd
 import sys
 
