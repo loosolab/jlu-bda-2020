@@ -85,7 +85,7 @@ class DataConfig:
         args.append("-m")
         args.extend(self.epigenetic_mark)
         rc = subprocess.call(args)
-        if rc != 0:
+        if rc != 0 or not os.path.isfile(os.path.join(path, self.csvname)):
             logging.error("error generating .csv")
             raise Exception("csv.r could not create CSV")
 
