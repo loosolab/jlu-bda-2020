@@ -78,7 +78,9 @@ class DataConfig:
         """
         tool = os.path.join(self.binpath, "scripts", "csv.r")
         path = os.path.join(self.outpath, "data", "download")
-        args = [tool, "-d", path, "-o", self.csvname, "-b"]
+        args = [tool, "-d", path, "-o", self.csvname, "-g"]
+        args.extend(self.genome)
+        args.append("-b")
         args.extend(self.biosource)
         args.append("-c")
         args.extend(self.chromosome)
