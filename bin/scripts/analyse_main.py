@@ -9,7 +9,7 @@ from scripts.repository import Repository
 from scripts.components_fit import GmFit
 from scripts.visualize_data import VisualizeData as VD
 from scripts.ema import EMA
-from scripts.modify_csv import modifyCSV 
+from scripts.modifyCSV import modifyCSV 
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -143,7 +143,7 @@ class TF_analyser:
                 single_result.insert(0,'genome', self.genome)
                 
                 #visualization and saving plots 
-                v= VD(self.path_results, tf, self.genome, biosource)
+                v= VD(self.path_results, tf, self.genome, biosource, self.chr)
                 path = v.displayDensityScatter(distribution, tf)
                 
                 v.altitudePlot(distribution, self.n_components, tf)
