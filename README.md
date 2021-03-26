@@ -45,9 +45,9 @@ dependencies:
   - util-linux=2.36
 ```
 
-2. Run `conda activate tf_analyzer` to activate the environment.
+2. Run `conda activate tf_analyzer` to activate the environment. This needs to stay activated in order for the tool to work.
 
-The newly created environment (`tf_analyzer`) needs to stay activated in order for the tool to work.
+3. From the repository root, navigate to `visualization/` and execute the following command: `npm install -g @angular/cli`.
 
 ## How to use
 The pipeline can be initiated by running `python bin/tf_analyzer.py` with these arguments:
@@ -102,6 +102,16 @@ Density Scatter Plot: This scatter plot contains the means of the ATAC scores on
 The third output is a table containing the weights of the individual components of the analysis.
 
 If any problems occur in the visualization, please check the web console of your browser.
+
+## Known errors
+
+### "Cannot find module..." when launching the web server
+```
+An unhandled exception occured: Cannot find module '@angular-devkit/build-angular/package.json'
+Require stack:
+[...]
+```
+To fix this, run `npm install --save-dev @angular-devkit/build-angular` inside the `visualization/` folder. Afterwards, run `ng serve` (in the same folder) to start the server.
 
 ## License
 (to be added)

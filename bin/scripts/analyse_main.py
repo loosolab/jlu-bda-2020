@@ -9,6 +9,7 @@ from scripts.repository import Repository
 from scripts.components_fit import GmFit
 from scripts.visualize_data import VisualizeData as VD
 from scripts.ema import EMA
+from scripts.modify_csv import modifyCSV 
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -41,6 +42,11 @@ class TF_analyser:
             
             self.evaluate_n = False
             self.n_components = n_comps
+            
+        path_scripts = os.path.dirname(__file__)
+        path_bin = os.path.split(path_scripts)
+        path_main = os.path.split(path_bin[0])
+        self.path_results = os.path.join(path_main[0], 'results')
             
     # def progress(self, count, total, suffix=''):
     #     """
@@ -86,13 +92,16 @@ class TF_analyser:
 
         """
         
+        
         # total = Input().number_of_chr(data)
         
         resultframe =pd.DataFrame(columns=['genome','width','mode','chr','biosource','tf','means','covariances', 'weights']) 
-
+        
         # i = 0
         # loop all biosources
+        print("analyse_main.py: unpacking")
         for biosource, b_value in data.items():
+            print("unpacking: " + biosource)
             #loop all transcription factors
             for tf, tf_value in b_value.items():
                 
@@ -118,6 +127,7 @@ class TF_analyser:
                 if self.evaluate_n == True:
                     
                     mode = 'auto'
+                    print("mode auto: number of components is evaluated (components_fit.py)")
                     #automated number of components evaluation  
                     all_diffs = GmFit.getDifference(self, distribution, self.eval_size)
                     self.n_components = GmFit.evaluate(self, all_diffs)
@@ -149,10 +159,13 @@ class TF_analyser:
                 single_result.insert(9, 'path', path)
                 
                 resultframe = pd.concat([resultframe, single_result])
-                
                 print (tf + "    Done")
                 # i += 1
                 # Main().progress(i, total, '')
+                parameters = [self.genome, self.width, mode, self.chr, biosource, tf]
+                modifyCSV(self.path_results + "/result.csv").compare(parameters)
+                
+
         #Save resultframe
         Repository().save_csv(resultframe)
             

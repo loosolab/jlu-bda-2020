@@ -36,7 +36,7 @@ class VisualizeData:
             path_scripts = os.path.dirname(__file__)
             path_bin = os.path.split(path_scripts)
             path_main = os.path.split(path_bin[0])
-            self.path_visualization = os.path.join(path_main[0], "visualization/assests/img/", biosource + genome, tf_id)
+            self.path_visualization = os.path.join(path_main[0], "visualization/assets/img/", biosource + genome, tf_id)
             try:
                 os.makedirs(self.path_plots)
             except:
@@ -151,6 +151,7 @@ class VisualizeData:
             figure_path = os.path.join(self.path_plots, "Contour_" + tf_id + ".svg")
             plt.savefig(figure_path, format="svg")
             vil_fig_path = os.path.join(self.path_visualization, "Contour_" + tf_id + ".svg")
+            plt.savefig(vil_fig_path, format="svg")
             plt.show()
             
             return z

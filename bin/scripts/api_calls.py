@@ -16,8 +16,8 @@ def get_biosource_list_for_tree():
     data_ls = []
     data_dict = {}
     for index in results.index:
-        biosource = results["biosource"][index]
-        tf = results["tf"][index]
+        biosource = results["biosource"][index] +"_"+ results["genome"][index]
+        tf = results["tf"][index] + "_" + results["chr"][index]
         if biosource not in data_dict:
             data_dict[biosource]=[]
         if tf not in data_dict[biosource]:
@@ -58,9 +58,9 @@ def getRawData(checked_data):
     for biosource in checked_data:
         rawdata_dict[biosource]={}
         for tf in checked_data[biosource]:
-            path_for_tf = results.loc[(results["tf"] == tf) & (results["biosource"] == biosource)]["path"].iloc[0]
-            weights = results.loc[(results["tf"] == tf) & (results["biosource"] == biosource)]["weights"].tolist()
-            means = results.loc[(results["tf"] == tf) & (results["biosource"] == biosource)]["means"].tolist()
+            path_for_tf = results.loc[(results["tf"] == tf.split(sep="_")[0]) & (results["chr"] == tf.split(sep="_")[1]) & (results["biosource"] == biosource.split(sep="_")[0]) & (results["genome"] == biosource.split(sep="_")[1])]["path"].iloc[0]
+            weights = results.loc[(results["tf"] == tf.split(sep="_")[0]) & (results["chr"] == tf.split(sep="_")[1]) & (results["biosource"] == biosource.split(sep="_")[0]) & (results["genome"] == biosource.split(sep="_")[1])]["weights"].tolist()
+            means = results.loc[(results["tf"] == tf.split(sep="_")[0]) & (results["chr"] == tf.split(sep="_")[1]) & (results["biosource"] == biosource.split(sep="_")[0]) & (results["genome"] == biosource.split(sep="_")[1])]["means"].tolist()
             #covariances = results.loc[(results["tf"] == tf) & (results["biosource"] == biosource)]["covariances"]
             #print(means)
             new_weights=[]

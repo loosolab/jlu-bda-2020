@@ -27,7 +27,10 @@ parser$add_argument("-o", "--output", type="character", default="linking_table",
 args <- parser$parse_args()
 
 library(data.table)
-library(DeepBlueR)
+
+suppressPackageStartupMessages(
+  library(DeepBlueR)
+)
 
 create_linking_table <- function(genome,chroms,filter_biosources,chip_type,atac_type,chip_marks,outdir,outfile) {
   
@@ -87,6 +90,7 @@ create_linking_table <- function(genome,chroms,filter_biosources,chip_type,atac_
   # ! doc missing
   
   verify_filters <- function(input_values,all_values,type="values") {
+    message(paste("verifying",type,"..."))
     input_values <- tolower(input_values)
     all_values <- tolower(all_values)
     removed_values <- input_values[!input_values %in% all_values]
@@ -100,12 +104,12 @@ create_linking_table <- function(genome,chroms,filter_biosources,chip_type,atac_
     }
   }
   
-  all_genomes <- deepblue_list_genomes()$name
+  all_genomes <- suppressMessages(deepblue_list_genomes()$name)
   if(!genome %in% all_genomes) {
     stop(paste("No valid genomes provided by user. Available genomes:",paste(all_genomes,collapse=", ")))
   }
   
-  all_chroms <- deepblue_chromosomes(genome = genome)
+  all_chroms <- suppressMessages(deepblue_chromosomes(genome = genome))
   if(chroms[1] != "all") {
     chrs <- verify_filters(chroms,all_chroms$id,"chromosomes")
   } else {
@@ -113,13 +117,13 @@ create_linking_table <- function(genome,chroms,filter_biosources,chip_type,atac_
   }
   
   if(filter_biosources[1] != "all") {
-    all_biosources <- deepblue_list_biosources()$name
+    all_biosources <- suppressMessages(deepblue_list_biosources()$name)
     filter_biosources <- verify_filters(filter_biosources,all_biosources,"biosources")
   } else {
     filter_biosources <- NULL
   }
   
-  tf_marks <- deepblue_list_epigenetic_marks(extra_metadata = list(category="Transcription Factor Binding Sites"))$name
+  tf_marks <- suppressMessages(deepblue_list_epigenetic_marks(extra_metadata = list(category="Transcription Factor Binding Sites"))$name)
   
   if(chip_marks[1] != "all") {
     chip_marks <- verify_filters(chip_marks,tf_marks,"epigenetic marks")
@@ -132,8 +136,8 @@ create_linking_table <- function(genome,chroms,filter_biosources,chip_type,atac_
   
   # 1st Step: Collect biosources for ATAC
   
-  atac <- deepblue_list_experiments(genome=genome, technique="ATAC-Seq", biosource=filter_biosources, type=atac_type)
-  dnase <- deepblue_list_experiments(genome=genome, technique="DNAse-Seq", biosource=filter_biosources, type=atac_type)
+  atac <- suppressMessages(deepblue_list_experiments(genome=genome, technique="ATAC-Seq", biosource=filter_biosources, type=atac_type))
+  dnase <- suppressMessages(deepblue_list_experiments(genome=genome, technique="DNAse-Seq", biosource=filter_biosources, type=atac_type))
   
   if(is.data.table(atac)) atac <- atac$id else atac <- NULL
   if(is.data.table(dnase)) dnase <- dnase$id else dnase <- NULL
@@ -146,12 +150,12 @@ create_linking_table <- function(genome,chroms,filter_biosources,chip_type,atac_
     
   } else {
     
-    atac_metadata <- lapply(access_experiments,function(x){ deepblue_info(x) })
+    atac_metadata <- lapply(access_experiments,function(x){ suppressMessages(deepblue_info(x)) })
     atac_biosources <- unique(vapply(atac_metadata,function(x) { tolower(x$sample_info$biosource_name) },character(1L)))
     
     # 2nd Step: Collect ChiP experiments and add to csv list if biosource has available ATAC data
     
-    chips <- deepblue_list_experiments(genome=genome, technique="ChiP-Seq", biosource=atac_biosources, type=chip_type, epigenetic_mark=chip_marks)
+    chips <- suppressMessages(deepblue_list_experiments(genome=genome, technique="ChiP-Seq", biosource=atac_biosources, type=chip_type, epigenetic_mark=chip_marks))
     
     if(!is.data.table(chips)) { 
     
@@ -161,7 +165,7 @@ create_linking_table <- function(genome,chroms,filter_biosources,chip_type,atac_
       
       chips <- chips$id  
       chip_metadata <- lapply(chips,function(c) {
-        metadata <- deepblue_info(c)
+        metadata <- suppressMessages(deepblue_info(c))
       })
       
       chip_biosources <- unique(tolower(vapply(chip_metadata,function(x){ x$sample_info$biosource_name },character(1L))))

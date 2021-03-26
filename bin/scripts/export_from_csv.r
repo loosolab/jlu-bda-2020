@@ -17,7 +17,9 @@ parser$add_argument("-c", "--chunks", type="integer", default=10000000L,
 
 args <- parser$parse_args()
 
-library(DeepBlueR)
+suppressPackageStartupMessages(
+  library(DeepBlueR)
+)
 
 # export_from_csv(csv filename, output directory, chunk size)
 # Handles the entire download process, starting with the creation of a file
@@ -48,18 +50,18 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
     regions_length <- 0
     message(filename)
     
-    query_id <- deepblue_select_experiments(experiment_name = id, chromosome = chr, start = chunk, end = chunk + chunk_size)
+    query_id <- suppressMessages(deepblue_select_experiments(experiment_name = id, chromosome = chr, start = chunk, end = chunk + chunk_size))
     message(paste("query id:",query_id))
     
     # for ATAC/DNAse-seq files (chunk > 0), filter out regions with the value 0
     
     if(chunk > 0) {
-      query_id <- deepblue_filter_regions(query_id = query_id, field = "VALUE", operation = "!=", value = "0", type = "number")
+      query_id <- suppressMessages(deepblue_filter_regions(query_id = query_id, field = "VALUE", operation = "!=", value = "0", type = "number"))
       message(paste("filtered query id:",query_id))
     }
     
-    count_request <- deepblue_count_regions(query_id)
-    expected_regions <- as.integer(deepblue_download_request_data(count_request,do_not_cache=TRUE))
+    count_request <- suppressMessages(deepblue_count_regions(query_id))
+    expected_regions <- as.integer(suppressMessages(deepblue_download_request_data(count_request,do_not_cache=TRUE)))
     
     if(expected_regions == 0) {
       
@@ -72,14 +74,14 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
       
     }
     
-    request_id <- deepblue_get_regions(query_id = query_id, output_format = format)
+    request_id <- suppressMessages(deepblue_get_regions(query_id = query_id, output_format = format))
     message(paste("request id:",request_id))
     
-    req_status <- deepblue_info(request_id)$state
+    req_status <- suppressMessages(deepblue_info(request_id)$state)
     
     if(req_status != "removed") {
       
-      regions <- try(deepblue_download_request_data(request_id,do_not_cache=TRUE))
+      regions <- try(suppressMessages(deepblue_download_request_data(request_id,do_not_cache=TRUE)))
       
       if(class(regions) != "GRanges") {
         
@@ -178,7 +180,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
     genomes <- unique(queued_files$genome)
     chrom_sizes <- vector("list")
     for(genome in genomes) {
-      chroms <- deepblue_chromosomes(genome)
+      chroms <- suppressMessages(deepblue_chromosomes(genome))
       chroms$id <- tolower(chroms$id)
       chrom_sizes[[genome]] <- chroms
     }
@@ -213,7 +215,9 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
       
       if(no_errors) {
         failed_rows[i,] <- NA
-        deepblue_export_meta_data(id,target.directory=out_dir,file.name=filename)
+        suppressMessages(
+          deepblue_export_meta_data(id,target.directory=out_dir,file.name=filename)
+        )
       }
       
     }
