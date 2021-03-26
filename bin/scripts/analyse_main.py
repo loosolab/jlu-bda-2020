@@ -143,7 +143,7 @@ class TF_analyser:
                 single_result.insert(0,'genome', self.genome)
                 
                 #visualization and saving plots 
-                v= VD(self.path_results, tf, self.genome, biosource)
+                v= VD(self.path_results, tf, self.genome, biosource, self.chr)
                 path = v.displayDensityScatter(distribution, tf)
                 
                 v.altitudePlot(distribution, self.n_components, tf)
