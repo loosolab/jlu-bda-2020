@@ -32,14 +32,16 @@ i=0
 for file in $(cut -d ";" -f 7 $csv_file | sed -n '1d;p')
 do
 	#echo $file
-	if [ -e "$local_path/$file.meta.txt" ]; then
-		if [ -e "$local_path/$file.txt" ]; then
-			cp "$local_path/$file.txt" "$dest_path/$file.txt"
+	if [ ! -e "$dest_path/$file.meta.txt" ]; then
+		if [ -e "$local_path/$file.meta.txt" ]; then
+			if [ -e "$local_path/$file.txt" ]; then
+				cp "$local_path/$file.txt" "$dest_path/$file.txt"
+			fi
+			cp "$local_path/$file.meta.txt" "$dest_path/$file.meta.txt"
+			copied=$((copied+1))
 		fi
-		cp "$local_path/$file.meta.txt" "$dest_path/$file.meta.txt"
-		copied=$((copied+1))
 	fi
 	i=$((i+1))
 done
 
-echo "$copied of $i files were found in `pwd`/$local_path"
+echo "$copied of $i files were copied to `pwd`/$local_path"
