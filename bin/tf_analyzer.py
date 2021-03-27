@@ -17,9 +17,9 @@ def main():
     parameters and run the analysis. The parameters are submitted via the command line.
     parameter  -h : help
     parameter -g / --genome= : genome
-    parameter -b / --biosource= : one or more biosources divided by comma
-    parameter -t / --tf= : one or more transcription factors divided by comma
-    parameter -c / --chromosome: one or more chromosomes divided by comma
+    parameter -b / --biosource= : one or more biosources divided by space
+    parameter -t / --tf= : one or more transcription factors divided by space
+    parameter -c / --chromosome: one or more chromosomes divided by space
     parameter -w / --width= : a parameter that determines the size of the areas to be analyzed on the chromosomes.
                               The start position is determined by subtracting the width from the summit of the peak,
                               the end position is determined by adding the width to the summit.
