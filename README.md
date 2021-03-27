@@ -48,17 +48,23 @@ dependencies:
   - psutil=5.8.0
 ```
 
-`$ conda env create -f environment.yml`
+```
+$ conda env create -f environment.yml
+```
 
 The newly created environment must then be activated before running the pipeline: 
 
-`$ conda activate tf_analyzer` 
+```
+$ conda activate tf_analyzer
+``` 
 
 Finally, from the repository root, navigate to `visualization/` and execute the following commands:
 
-`$ npm install -g @angular/cli`
+```
+$ npm install -g @angular/cli
 
-`$ npm install --save-dev @angular-devkit/build-angular`
+$ npm install --save-dev @angular-devkit/build-angular
+```
 
 ## How to use
 The pipeline can be initiated by running `$ python bin/tf_analyzer.py` with these arguments:
@@ -96,7 +102,10 @@ Use the help argument (`-h` or `--help`) to display a more detailed list of avai
 The results can be found in the `plots` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`. If the application is launched through a virtual machine, it can be accessed locally via SSH (`ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server`).
  
 ## Example case
-`$ python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr1`
+
+```
+$ python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr1
+```
 
 This command will download and analyze all data for transcription factor "AR", a known activator, sampled from chromosome 1 of the biosource "kidney".
 
