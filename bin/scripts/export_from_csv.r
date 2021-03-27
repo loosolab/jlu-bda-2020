@@ -22,6 +22,7 @@ suppressPackageStartupMessages(
 )
 
 # export_from_csv(csv filename, output directory, chunk size)
+#
 # Handles the entire download process, starting with the creation of a file
 # queue which it iterates through. For ATAC files, each experiment is divided
 # into chunks to prevent memory errors. If files that have not been downloaded
@@ -37,6 +38,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
   }
   
   # download_regions(experiment id, filename, chromosome, format, chunk start, output directory)
+  #
   # Attempts to download a single file from the Deepblue database. The expected
   # number of regions is requested beforehand to check for mismatches later. If
   # 0 is returned, the function assumes that no data is available for this range
@@ -67,6 +69,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
       
       # this is not considered an error
       warning(paste("No regions available for",filename,"(skipping) query_id:",query_id))
+      message("skipping")
       
       # output_file <- paste(out_dir,"/",filename,".txt",sep="")
       # return(file.create(output_file)) # returns TRUE if file could be created
@@ -176,6 +179,8 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
   
   if(nrow(queued_files) > 0) {
     
+    message(paste(nrow(queued_files),"files will now be downloaded."))
+    
     # get chrom sizes for all genomes in the CSV
     genomes <- unique(queued_files$genome)
     chrom_sizes <- vector("list")
@@ -244,4 +249,3 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
 }
 
 export_from_csv(args$input,args$output,as.integer(args$chunks))
-
