@@ -177,53 +177,25 @@ def log_scale_file(file_path, column_names=None):
             bw_log.addHeader(header)
 
             for chrom in chrs.keys():
-                # Check if file contains values, else raise error
-                frst_interval = bw.intervals(chrom, 0, 1)
-                if frst_interval is None:
-                    raise RuntimeError("The file {} does not contain any "
-                                    "values.".format(file_path))
+                i = 0
+                step = 1000000
+                while i < chrs[chrom]:
 
-                frst_interval = bw.intervals(chrom, 0, 1)[0]
+                    intervals = bw.intervals(chrom, i, i+step if i+step < chrs[chrom] else chrs[chrom])
 
-                # Write first interval to log file
-                bw_log.addEntries([chrom], [0], ends=[frst_interval[1]],
-                                  values=[math.log(frst_interval[2])])
+                    if intervals:
+                        chromosomes = [chrom] * len(intervals)
+                        starts = [interval[0] for interval in intervals]
+                        ends = [interval[1] for interval in intervals]
 
-                # Set start, stop and step size for intervals in following loop
-                start = frst_interval[1]
-                step = 10000000
-                stop = start + step if start + step < chrs[chrom] else \
-                    chrs[chrom]
-
-                while True:
-                    intervals = bw.intervals(chrom, start, stop)
-                    # Skip empty intervals
-                    if intervals is None:
-                        continue
-
-                    chromosomes = [chrom] * len(intervals)
-                    starts = [interval[0] for interval in intervals]
-                    ends = [interval[1] for interval in intervals]
-
-                    # Make sure there are no 0s in array before attempting
-                    # log-scaling while getting signal values
-                    # if there are, replace them with '1' so the value after
-                    # scaling will be 0
-                    signal_values = [interval[2] if interval[2] != 0 else 1 for
-                                     interval in intervals]
-                    log_values = numpy.log(signal_values)
-                    bw_log.addEntries(chromosomes, starts, ends=ends,
-                                      values=log_values)
-
-                    # Check if stop equals the end of the chromosome and if
-                    # it does, break the loop
-                    if stop == chrs[chrom]:
-                        break
-
-                    start = ends[-1]
-                    stop = start + step if start + step < chrs[chrom] else \
-                        chrs[chrom]
-
+                        signal_values = [interval[2] if interval[2] != 0 else 1 for interval in intervals]
+                        log_values = numpy.log(signal_values)
+                        bw_log.addEntries(chromosomes, starts, ends=ends,
+                                          values=log_values)
+                        i = ends[-1]
+                    else:
+                        i += 1000000
+                        
             bw.close()
             bw_log.close()
 
@@ -306,46 +278,27 @@ def min_max_scale_file(file_path, log_file_path, min_val,
         bw_min_max.addHeader(header)
 
         for chrom in chrs.keys():
-            frst_interval = bw.intervals(chrom, 0, 1)[0]
-            frst_log_interval = bw_log.intervals(chrom, 0, 1)[0]
 
-            # Write first interval to log file
-            bw_min_max.addEntries([chrom], [0], ends=[frst_interval[1]],
-                                  values=[(frst_log_interval[2] - min_val) /
-                                          (max_val - min_val)])
+            i = 0
+            step = 1000000
 
-            # Set start, stop and step size for intervals in following loop
-            start = frst_interval[1]
-            step = 10000000
-            stop = start + step if start + step < chrs[chrom] else \
-                chrs[chrom]
+            while i < chrs[chrom]:
+                intervals = bw.intervals(chrom, i, i+step if i+step < chrs[chrom] else chrs[chrom])
+                log_intervals = bw_log.intervals(chrom,i,i+step if i+step < chrs[chrom] else chrs[chrom])
 
-            while True:
-                intervals = bw.intervals(chrom, start, stop)
-                log_intervals = bw_log.intervals(chrom, start, stop)
+                if intervals:
+                    chromosomes = [chrom]*len(intervals)
+                    starts = [interval[0] for interval in intervals]
+                    ends = [interval[1] for interval in intervals]
 
-                # Skip empty intervals
-                if intervals is None:
-                    continue
-
-                chromosomes = [chrom] * len(intervals)
-                starts = [interval[0] for interval in intervals]
-                ends = [interval[1] for interval in intervals]
-
-                # Min-max scale the log-scaled values
-                min_max_values = [(interval[2] - min_val) / (max_val - min_val)
-                                  for interval in log_intervals]
-                bw_min_max.addEntries(chromosomes, starts, ends=ends,
+                    # Min-max scale the log-scaled values
+                    min_max_values = [(interval[2] - min_val) / (max_val - min_val) for interval in log_intervals]
+                    bw_min_max.addEntries(chromosomes, starts, ends=ends,
                                       values=min_max_values)
+                    i=ends[-1]
+                else:
+                    i+=1000000
 
-                # Check if stop equals the end of the chromosome and if
-                # it does, break the loop
-                if stop == chrs[chrom]:
-                    break
-
-                start = ends[-1]
-                stop = start + step if start + step < chrs[chrom] else \
-                    chrs[chrom]
 
         bw.close()
         bw_log.close()
