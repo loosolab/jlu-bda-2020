@@ -48,26 +48,31 @@ dependencies:
   - psutil=5.8.0
 ```
 
-```
+```bash
 $ conda env create -f environment.yml
 ```
 
 The newly created environment must then be activated before running the pipeline: 
 
-```
+```bash
 $ conda activate tf_analyzer
 ``` 
 
 Finally, from the repository root, navigate to `visualization/` and execute the following commands:
 
-```
+```bash
 $ npm install -g @angular/cli
 
 $ npm install --save-dev @angular-devkit/build-angular
 ```
 
 ## How to use
-The pipeline can be initiated by running `$ python bin/tf_analyzer.py` with these arguments:
+The pipeline can be initiated by running
+```bash
+$ python bin/tf_analyzer.py
+```
+
+with these arguments:
 
 `-g, --genome` genome (default: hg19)
 
@@ -99,11 +104,15 @@ Use the help argument (`-h` or `--help`) to display a more detailed list of avai
 
 **Note:** Please note that all arguments must be written in *lower case* letters. Multiple arguments (where applicable) must be divided by spaces (e.g. `-b "kidney" "huvec cell" "regulatory t cell"`).
 
-The results can be found in the `plots` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`. If the application is launched through a virtual machine, it can be accessed locally via SSH (`ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server`).
+The results can be found in the `plots` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`. If the application is launched through a virtual machine, it can be accessed locally via SSH:
+
+```bash
+$ ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server
+```
  
 ## Example case
 
-```
+```bash
 $ python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr1
 ```
 
@@ -128,12 +137,32 @@ If any problems occur in the visualization, please check the web console of your
 ## Known errors
 
 ### "Cannot find module..." when launching the web server
+
 ```
 An unhandled exception occured: Cannot find module '@angular-devkit/build-angular/package.json'
 Require stack:
 [...]
 ```
-To fix this, run `$ npm install --save-dev @angular-devkit/build-angular` inside the `visualization/` folder. Afterwards, run `$ ng serve` (in the same folder) or `$ python  ../bin/tf_analyzer.py --visualize` to start the server.
+
+To fix this, navigate to the `visualization/` directory and run
+
+```bash
+$ npm install --save-dev @angular-devkit/build-angular
+```
+
+Afterwards, run
+
+```bash
+$ ng serve
+```
+
+in the same folder or
+
+```bash
+$ python ../bin/tf_analyzer.py --visualize
+```
+
+to start the server.
 
 ### Ports/address already in use when running web app
 The web application currently listens on ports `4200` and `5000`. Assure that no other program is using them (e.g. with `netstat` on Linux) before running the TF Analyzer.
