@@ -183,24 +183,21 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
     
   # 1st Step: Collect biosources for ATAC
   
-  atac <- suppressMessages(deepblue_list_experiments(genome=genome, technique="ATAC-Seq", biosource=filter_biosources, type=atac_type))
-  dnase <- suppressMessages(deepblue_list_experiments(genome=genome, technique="DNAse-Seq", biosource=filter_biosources, type=atac_type))
+  atac_experiments <- suppressMessages(deepblue_list_experiments(genome=genome, technique=c("ATAC-seq","DNAse-seq"), biosource=filter_biosources, type=atac_type))
   
   # deepblue_list_experiments(...) returns "\n" if no experiments match the
   # arguments, a chr list of 2 if one experiment is found and otherwise a
   # data.frame of all results. is.list() treats data.frames and data.tables as
   # lists as well.
   
-  if(is.list(atac)) atac <- atac$id else atac <- NULL
-  if(is.list(dnase)) dnase <- dnase$id else dnase <- NULL
-  
-  if(is.null(atac) && is.null(dnase)) {
+  if(is.list(atac_experiments)) {
+    atac_experiments <- atac_experiments$id
+  } else {
     stop(paste(genome,"No ATAC/DNAse-seq data available for given arguments",sep=": "))
   }
-  access_experiments <- c(atac,dnase)
-  message(paste("fetched",length(access_experiments),"ATAC/DNAse-seq experiments"))
+  message(paste("fetched",length(atac_experiments),"ATAC/DNAse-seq experiments"))
   
-  atac_metadata <- lapply(access_experiments,function(x){ suppressMessages(deepblue_info(x)) })
+  atac_metadata <- lapply(atac_experiments,function(x){ suppressMessages(deepblue_info(x)) })
   
   # The biosources are extracted individually to create a filter for the next
   # step, since we only need ChIP experiments matching ATAC/DNAse biosources.
@@ -208,18 +205,18 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   
   # 2nd Step: Collect ChiP experiments and add to csv list
   
-  chips <- suppressMessages(deepblue_list_experiments(genome=genome, technique="ChIP-Seq", biosource=atac_biosources, type=chip_type, epigenetic_mark=chip_marks))
-
-  if(!is.list(chips)) { 
+  chip_experiments <- suppressMessages(deepblue_list_experiments(genome=genome, technique="ChIP-Seq", biosource=atac_biosources, type=chip_type, epigenetic_mark=chip_marks))
   
-      stop(paste(genome,"No ChIP-seq data available for given arguments",sep=": "))
+  if(!is.list(chip_experiments)) { 
+    
+    stop(paste(genome,"No ChIP-seq data available for given arguments",sep=": "))
     
   } else {
     
-    chips <- chips$id
-    message(paste("fetched",length(chips),"ChIP-seq experiments"))
+    chip_experiments <- chip_experiments$id
+    message(paste("fetched",length(chip_experiments),"ChIP-seq experiments"))
     
-    chip_metadata <- lapply(chips,function(c) {
+    chip_metadata <- lapply(chip_experiments,function(c) {
       metadata <- suppressMessages(deepblue_info(c))
     })
     
