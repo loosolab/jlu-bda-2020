@@ -16,7 +16,7 @@ def parse(data_path):
 
     # read linking_table to get all available genomes, biosources and tfs
     lt = pd.read_csv(os.path.join(data_path, 'linking_table.csv'), sep=';',
-                     usecols=['genome', 'epigenetic_mark', 'biosource_name'])
+                     usecols=['genome', 'epigenetic_mark', 'biosource'])
     genomes = set(lt.values[:, 0])
     lt_tfs = set(lt.values[:, 1][lt.values[:, 1] != ('dnasei' or 'dna accessibility')])
     lt_biosources = set(x for x in lt.values[:, 2])
