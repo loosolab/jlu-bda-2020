@@ -164,7 +164,9 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
     #    -m is missing (NULL): all epigenetic marks (including non-TFs) are used
     #    -c is missing (NULL): chrs stays NULL and must be assigned separately
     #                          (see below)
-    chrs <- all_chroms$id
+    if(is.null(chrs)) {
+      chrs <- all_chroms$id
+    }
   }
   
   if(chromsizes) {
