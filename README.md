@@ -1,6 +1,8 @@
 # TF Analyzer
 
-This tool allows for the analysis and classification of transcription factors by calculating the relations between TF binding sites and chromatin accessibility, using the [Deepblue Epigenomic Data Server](https://deepblue.mpi-inf.mpg.de/) to link epigenomic ChIP-seq and ATAC/DNAse-seq data by biosource (i.e. cell type).
+## Introduction
+
+This tool allows for the analysis and classification of transcription factors (TFs) by calculating the relations between observed TF binding sites and chromatin accessibility, using the [Deepblue Epigenomic Data Server](https://deepblue.mpi-inf.mpg.de/) to link epigenomic ChIP-seq and ATAC/DNAse-seq data by biosource (i.e. cell type).
 
 The latest working build can be cloned from the `dev` branch.
 
@@ -9,16 +11,16 @@ The latest working build can be cloned from the `dev` branch.
  1. Link and download epigenomic data matching user-requested biosources, TFs, genomes and chromosomes
  2. Convert, normalize and sort downloaded data if necessary
  3. Calculate relations between ChIP and ATAC data for each TF and save results as CSV files
- 4. Visualize data
+ 4. Visualize data through a self-hosted web application
  
 ## Requirements
 
  - Python 3 and pip
  - [Conda](https://docs.conda.io/projects/conda/en/latest/index.html)
- - [npm](https://www.npmjs.com/)
  
 ## Setup
-1. Run `conda env create -f environment.yml` to create a conda environment with the following modules:
+First, we need to create a conda environment with the following dependencies:
+
 ```
 channels:
   - bioconda
@@ -46,12 +48,20 @@ dependencies:
   - psutil=5.8.0
 ```
 
-2. Run `conda activate tf_analyzer` to activate the environment. This needs to stay activated in order for the tool to work.
+`$ conda env create -f environment.yml`
 
-3. From the repository root, navigate to `visualization/` and execute the following command: `npm install -g @angular/cli`.
+The newly created environment must then be activated before running the pipeline: 
+
+`$ conda activate tf_analyzer` 
+
+Finally, from the repository root, navigate to `visualization/` and execute the following commands:
+
+`$ npm install -g @angular/cli`
+
+`$ npm install --save-dev @angular-devkit/build-angular`
 
 ## How to use
-The pipeline can be initiated by running `python bin/tf_analyzer.py` with these arguments:
+The pipeline can be initiated by running `$ python bin/tf_analyzer.py` with these arguments:
 
 `-g, --genome` genome (default: hg19)
 
@@ -61,7 +71,7 @@ The pipeline can be initiated by running `python bin/tf_analyzer.py` with these 
 
 `-c, --chromosome` list of chromosomes (default: all chromosomes of the selected genome)
 
-`-w, --width` single integer to determine the range of analysis (peak +- w, default: 50)
+`-w, --width` single integer to determine the range of analysis on the chromosomes (peak +- w, default: 50)
 
 `-r, --redo_analysis` (optional) existing results will be executed again and overwritten
 
@@ -86,7 +96,7 @@ Use the help argument (`-h` or `--help`) to display a more detailed list of avai
 The results can be found in the `plots` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`. If the application is launched through a virtual machine, it can be accessed locally via SSH (`ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server`).
  
 ## Example case
-`python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr1`
+`$ python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr1`
 
 This command will download and analyze all data for transcription factor "AR", a known activator, sampled from chromosome 1 of the biosource "kidney".
 
@@ -114,7 +124,10 @@ An unhandled exception occured: Cannot find module '@angular-devkit/build-angula
 Require stack:
 [...]
 ```
-To fix this, run `npm install --save-dev @angular-devkit/build-angular` inside the `visualization/` folder. Afterwards, run `ng serve` (in the same folder) to start the server.
+To fix this, run `$ npm install --save-dev @angular-devkit/build-angular` inside the `visualization/` folder. Afterwards, run `$ ng serve` (in the same folder) or `$ python  ../bin/tf_analyzer.py --visualize` to start the server.
+
+### Ports/address already in use when running web app
+The web application currently listens on ports `4200` and `5000`. Assure that no other program is using them (e.g. with `netstat` on Linux) before running the TF Analyzer.
 
 ## License
 (to be added)
