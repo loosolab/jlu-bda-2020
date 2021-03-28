@@ -49,7 +49,8 @@ def main():
         genome_choices = [genome[1].lower() for genome in server.list_genomes(user_key)[1]]
         genome_choices.sort()
 
-        biosource_choices = [biosource[1].lower().replace("'","\\'") for biosource in server.list_biosources(None, user_key)[1]]
+        biosource_choices = [biosource[1].lower().replace("'", "\\'") for biosource in
+                             server.list_biosources(None, user_key)[1]]
         biosource_choices.append('all')
         biosource_choices.sort()
 
@@ -118,12 +119,6 @@ def main():
         os.mkdir(
             os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'visualization', 'src', 'assets', 'img')))
 
-    # remove images in visualization folder if analysis is executed again
-    if args.redo_analysis:
-        for f in os.listdir(os.path.abspath(
-                os.path.join(os.path.dirname(__file__), '..', 'visualization', 'src', 'assets', 'img'))):
-            os.remove(f)
-
     # print a list of all genomes and their associated chromosomes
     if args.list_chromosomes:
         for genome in genome_choices:
@@ -167,7 +162,7 @@ def main():
             args.biosource = biosource_choices
             args.biosource.remove('all')
         else:
-            args.biosource = [x.replace("'","\\'") for x in args.biosource]
+            args.biosource = [x.replace("'", "\\'") for x in args.biosource]
 
         if 'all' in args.tf:
             args.tf = [x for x in tf_choices if x != "all"]
@@ -182,7 +177,8 @@ def main():
 
         # run the script score.py and store the calculated scores in the dictionary 'scores'
         scores, exist = scripts.score.findarea(args.width, args.genome.lower(), [x.lower() for x in args.biosource],
-                                               [x.lower() for x in args.tf], args.chromosome, args.output_path, args.redo_analysis)
+                                               [x.lower() for x in args.tf], args.chromosome, args.output_path,
+                                               args.redo_analysis, args.component_size)
 
         # test if 'scores' is an empty dictionary
         # if not, generate plots with the script analyse_main.py
