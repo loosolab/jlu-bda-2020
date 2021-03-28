@@ -54,20 +54,21 @@ suppressPackageStartupMessages(
 
 create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_type,chip_marks,outdir,outfile,append,skip,chromsizes) {
   
-  # new_row(metadata)
+  # new_row(metadata, output filename, chromosomes)
   #
   # Accepts a list containing metadata of one experiment, which is the standard
-  # output of deepblue_info(experiment_id). In the final CSV file, the first few
-  # columns are fixed, so these are extracted explicitly with some added info
-  # (sample info & extra metadata). Since all downloaded files are split into
+  # output of deepblue_info(experiment_id). Since all downloaded files are split into
   # chromosomes, this function uses expand.grid to create data.tables of the
   # same file for all desired chromosomes.
   # Example: If the user requested chr1, chr2 and chr3, then each experiment
   # found in the Deepblue database will add three rows of metadata to the list
   # of data.tables which new_row() returns. Only the `filename` and `chromosome`
   # columns will differ between the three rows.
+  #
+  # The resulting list of data.tables is rbound into a single data.table and
+  # appended to the CSV file.
   
-  new_row <- function(metadata) {
+  new_row <- function(metadata,output_file,chrs) {
     
     name <- metadata$name
     message(name)
@@ -85,11 +86,8 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
         filename <- paste(x,collapse=".")
       }
       
-      e <- metadata$`_id`
-      sample_info <- metadata$sample_info
-      extra <- metadata$extra_metadata
       meta <- data.table(
-        experiment_id=e,
+        experiment_id=metadata$`_id`,
         genome=metadata$genome,
         biosource=tolower(metadata$sample_info$biosource_name),
         technique=tolower(metadata$technique),
@@ -101,14 +99,13 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
         sample_id=metadata$sample_id,
         project=metadata$project,
         total_size=metadata$upload_info$total_size
-        # as.data.table(sample_info),
-        # as.data.table(extra)
       )
       return(meta)
       
     })
     
-    return(return_list)
+    fwrite(rbindlist(return_list),file=output_file,na="",sep=";",append = TRUE)
+    
   }
   
   # verify_filters(values in query, values to check against, type of values)
@@ -125,10 +122,10 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   # data.
   
   verify_filters <- function(input_values,all_values,type="values") {
-    message(paste("verifying",type,"..."))
     if(is.null(input_values)) {
       return(all_values)
     }
+    message(paste("verifying",type,"..."))
     input_values <- tolower(input_values)
     all_values <- tolower(all_values)
     removed_values <- input_values[!input_values %in% all_values]
@@ -180,7 +177,46 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
       message(paste(sizefile,"written to",normalizePath(outdir)))
     }
   }
-    
+  
+  if(grepl("/",outfile)) {
+    # This section handles the output directory (-d) and filename (-o) args.
+    # If -o (outfile) contains "/", ignore -d (outdir) argument.
+    splitfile <- strsplit(outfile,"/")[[1]]
+    outdir <- paste(splitfile[-length(splitfile)],collapse="/")
+    output_file <- outfile
+  } else {
+    # Otherwise, -d and -o arguments are pasted into the full path.
+    if(length(outdir) > 0) {
+      outdir <- paste(strsplit(outdir,"/")[[1]],collapse="/") # remove terminating "/" characters
+      output_file <- paste(paste(outdir,outfile,sep="/"))
+    } else {
+      output_file <- outfile
+    }
+  }
+  output_file <- paste(sub("\\.csv$","",output_file),"csv",sep=".")
+
+  # --append: If a CSV file with the -o filename already exists, only new
+  #           results will be appended.
+  # With append set to TRUE, the id and chromosome columns of the existing CSV
+  # are imported to check later whether a combination of a certain experiment
+  # and chromosome is already contained in the old CSV.
+  # If append is set to FALSE, the file will be removed. This is because
+  # new_row() always appends its lines regardless. If file.create() was used
+  # instead of .remove, fwrite(..., append=TRUE) would not write a header.
+  
+  if(file.exists(output_file)) {
+    if(append) {
+      old_data <- fread(file=output_file,header=TRUE,sep=";",select=c("experiment_id","chromosome"))
+    } else {
+      file.remove(output_file)
+    }
+  } else {
+    append <- FALSE
+    if(!dir.exists(outdir)) {
+      dir.create(outdir,recursive = TRUE)
+    }
+  }
+
   # 1st Step: Collect biosources for ATAC
   
   atac_experiments <- suppressMessages(deepblue_list_experiments(genome=genome, technique=c("ATAC-seq","DNAse-seq"), biosource=filter_biosources, type=atac_type))
@@ -195,7 +231,7 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   } else {
     stop(paste(genome,"No ATAC/DNAse-seq data available for given arguments",sep=": "))
   }
-  message(paste("fetched",length(atac_experiments),"ATAC/DNAse-seq experiments"))
+  message(paste("fetching",length(atac_experiments),"ATAC/DNAse-seq experiments ..."))
   
   atac_metadata <- lapply(atac_experiments,function(x){ suppressMessages(deepblue_info(x)) })
   
@@ -206,90 +242,49 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   # 2nd Step: Collect ChiP experiments and add to csv list
   
   chip_experiments <- suppressMessages(deepblue_list_experiments(genome=genome, technique="ChIP-Seq", biosource=atac_biosources, type=chip_type, epigenetic_mark=chip_marks))
-  
+
   if(!is.list(chip_experiments)) { 
-    
-    stop(paste(genome,"No ChIP-seq data available for given arguments",sep=": "))
+  
+      stop(paste(genome,"No ChIP-seq data available for given arguments",sep=": "))
     
   } else {
     
     chip_experiments <- chip_experiments$id
-    message(paste("fetched",length(chip_experiments),"ChIP-seq experiments"))
+    message(paste("fetching",length(chip_experiments),"ChIP-seq experiments ..."))
     
     chip_metadata <- lapply(chip_experiments,function(c) {
       metadata <- suppressMessages(deepblue_info(c))
     })
     
     chip_biosources <- unique(tolower(vapply(chip_metadata,function(x){ x$sample_info$biosource_name },character(1L))))
-    chip_list <- lapply(chip_metadata,new_row)
-    
-    # before: List of lists of data.tables
-    chip_list <- unlist(chip_list,recursive=FALSE)
-    # after:  List of data.tables
-    
+
     # 3rd Step: Add ATAC experiments to csv if biosource has available ChiP data
     # Likewise, we only need ATAC/DNAse data that matches biosources retained
     # by our ChIP-seq experiments.
     
     atac_metadata <- atac_metadata[lapply(atac_metadata,function(x){ tolower(x$sample_info$biosource_name) }) %in% chip_biosources]
-    atac_list <- unlist(lapply(atac_metadata,new_row),recursive=FALSE)
+    message(paste("kept",length(atac_metadata),"ATAC/DNAse-seq experiments"))
     
-    csv_data <- rbindlist(c(chip_list,atac_list),fill=TRUE)
+    all_metadata <- c(chip_metadata,atac_metadata)
     
-  }
-
-  # If "output" argument contains "/", ignore "directory" argument
-  # Otherwise, -o and -i arguments are pasted into the full path
-  
-  if(grepl("/",outfile)) {
-    splitfile <- strsplit(outfile,"/")[[1]]
-    outdir <- paste(splitfile[-length(splitfile)],collapse="/")
-    output_file <- outfile
-  } else {
-    if(length(outdir) > 0) {
-      outdir <- paste(strsplit(outdir,"/")[[1]],collapse="/") # remove terminating "/" characters
-      output_file <- paste(paste(outdir,outfile,sep="/"))
-    } else {
-      output_file <- outfile
-    }
-  }
-  output_file <- paste(sub("\\.csv$","",output_file),"csv",sep=".")
-  
-  if(is.null(csv_data)) {
-    
-    stop("No data available for CSV")
-    
-  } else {
-    
-    # check whether CSV with given filename already exists - if yes, add new rows
-    if(append && file.exists(output_file)) {
-      
-      old_csv <- fread(file=output_file,header=TRUE,sep=";",colClasses=c("character"))
-      old_filenames <- old_csv$filename
-      csv_data.unique <- csv_data[!csv_data$filename %in% old_filenames]
-      
-      if(nrow(csv_data.unique) > 0) {
-        
-        csv_data <- rbind(old_csv,csv_data.unique,fill=TRUE)
-        fwrite(csv_data,file=output_file,na="",sep=";")
-        message(paste(nrow(csv_data.unique),"lines added to",normalizePath(output_file)))
-        
-      } else {
-        
-        message(paste("No new data was added to",normalizePath(output_file)))
-        
+    if(append) {
+      line_count <- 0
+      for(m in all_metadata) {
+        filtered_chrs <- chrs[!chrs %in% old_data[experiment_id==m$`_id`]$chromosome]
+        if(length(filtered_chrs) > 0) {
+          new_row(m,output_file,filtered_chrs)
+          line_count <- line_count + length(filtered_chrs)
+        }
       }
-      
+      message(paste(line_count,"lines added to",normalizePath(output_file)))
     } else {
-      
-      if(!dir.exists(outdir)) {
-        dir.create(outdir,recursive = TRUE)
+      for(m in all_metadata) {
+        new_row(m,output_file,chrs)
       }
-      
-      fwrite(csv_data,file=output_file,na="",sep=";")
-      message(paste(nrow(csv_data),"lines written to",normalizePath(output_file)))
-      
+      line_count <- length(all_metadata) * length(chrs)
+      message(paste(line_count,"lines written to",normalizePath(output_file)))
     }
+    
   }
   
 }
