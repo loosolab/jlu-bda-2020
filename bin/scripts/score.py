@@ -10,7 +10,7 @@ import os
 import scripts.repository
 
 
-def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath, redo_analysis):
+def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath, redo_analysis, mode):
     # path to pickledata
     picklepath = os.path.abspath(
         os.path.join(outpath, 'data', 'pickledata'))
@@ -38,10 +38,13 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath, redo_analysis):
             calculateddict[biosource] = {}
 
         for tf in chipdict:
-
             # test if result for biosource-tf already exists
-            if result_csv is not None and len(result_csv.loc[(result_csv['biosource'] == biosource) & (
-                    result_csv['tf'] == tf)]) > 0 and not redo_analysis:
+            if result_csv is not None and len(result_csv.loc[
+                                                  (result_csv['biosource'] == biosource) & (result_csv['tf'] == tf) &
+                                                  (result_csv['genome'] == genom) & (result_csv['width'] == w) &
+                                                  (result_csv['chr'] == "".join(chr_list)) &
+                                                  (result_csv['mode'] == (
+                                                          'manual' if mode else 'auto'))]) > 0 and not redo_analysis:
                 exist = True
 
             else:
@@ -87,9 +90,7 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath, redo_analysis):
 
                                             # calculate mean of chip and atac scores
 
-                                            calculationls = []
-                                            calculationls.append(peaklocationstart)
-                                            calculationls.append(peaklocationend)
+                                            calculationls = [peaklocationstart, peaklocationend]
                                             for i in (chip_score, atac_score):
                                                 calculationls.append(
                                                     calculate_mean(i, peaklocationstart, peaklocationend))
@@ -115,7 +116,7 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath, redo_analysis):
 
 
 def calculate_mean(i, peaklocationstart, peaklocationend):
-    length = peaklocationend-peaklocationstart
+    length = peaklocationend - peaklocationstart
     mean = 0
     if i:
         for interval in i:
