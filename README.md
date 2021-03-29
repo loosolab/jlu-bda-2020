@@ -21,6 +21,8 @@ The latest working build can be cloned from the `dev` branch.
 ## Setup
 First, we need to create a conda environment with the following dependencies:
 
+**environment.yml**
+
 ```
 channels:
   - bioconda

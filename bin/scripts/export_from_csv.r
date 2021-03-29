@@ -176,10 +176,9 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
   meta_files <- dir(path=out_dir, pattern="meta.txt")
   downloaded_files <- gsub(".meta.txt","",meta_files)
   queued_files <- data[!data$filename %in% downloaded_files]
+  n_files <- nrow(queued_files)
   
-  if(nrow(queued_files) > 0) {
-    
-    message(paste(nrow(queued_files),"files will now be downloaded."))
+  if(n_files > 0) {
     
     # get chrom sizes for all genomes in the CSV
     genomes <- unique(queued_files$genome)
@@ -192,7 +191,9 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
     
     failed_rows <- queued_files
     
-    for(i in 1:nrow(queued_files)) {
+    for(i in 1:n_files) {
+      
+      progress_msg <- paste("downloading file",i,"of",n_files)
       
       row <- queued_files[i,]
       filename <- row$filename
@@ -201,6 +202,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
       
       if(row$technique == "chip-seq") {
         
+        message(progress_msg)
         no_errors <- download_regions(id,filename,chr,row$format,0,out_dir)
         
       } else {
@@ -208,11 +210,13 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
         genom <- row$genome
         this_chrom_size <- chrom_sizes[[genom]][chrom_sizes[[genom]]$id == chr]$name
         chunks <- seq(1,this_chrom_size,by=chunk_size)
+        n_chunks <- length(chunks)
         
-        for(chunk in chunks) {
+        for(j in 1:n_chunks) {
           
-          chunked_filename <- paste(filename,"chunk",chunk,sep="_")
-          no_errors <- download_regions(id,chunked_filename,chr,row$format,chunk,out_dir)
+          message(paste(progress_msg,"- chunk",j,"of",n_chunks))
+          chunked_filename <- paste(filename,"chunk",chunks[j],sep="_")
+          no_errors <- download_regions(id,chunked_filename,chr,row$format,chunks[j],out_dir)
           if(!no_errors) break
           
         }
