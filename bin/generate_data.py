@@ -64,10 +64,10 @@ class DataConfig:
             self.validate_convert_files()
             self.merge_forward_reverse()
             self.sort_files()
+            self.generate_dictionaries()
         else:
             print("No new data was downloaded, skipping validation, merging and sorting.")
         self.normalize()
-        self.generate_dictionaries()
 
     def generate_csv(self):
         """Ǵenerate a .csv containing all files fitting the parameters.
