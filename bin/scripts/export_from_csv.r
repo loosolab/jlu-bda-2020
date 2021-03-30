@@ -14,6 +14,8 @@ parser$add_argument("-o", "--output", type="character", default=".",
                     help="Output directory name [default: \"%(default)s\"]")
 parser$add_argument("-c", "--chunks", type="integer", default=10000000L,
                     help="Chunk size for ATAC/DNAse data [default: %(default)s]")
+parser$add_argument("-l","--check_local_files", type="character", default=NULL,
+                    help="External directory where local files are stored. Files in queue will be copied to the output directory and not downloaded. [default: NULL]")
 
 args <- parser$parse_args()
 
@@ -29,7 +31,7 @@ suppressPackageStartupMessages(
 # remain, the function will call download_regions() for each file (and chunk) to
 # request the corresponding regions from the Deepblue server.
 
-export_from_csv <- function(csv_file,out_dir,chunk_size) {
+export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
   
   failed_warning <- function(filename,request_id,msg) {
     warning(paste(
@@ -166,16 +168,47 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
     sep=";",
     select=c("experiment_id","filename","format","technique","genome")
   )
-  
-  # The script checks whether there are files that have already been
-  # downloaded in the output folder. Is this the case, then they are
-  # removed from the queue.
-  # An existing [filename].meta.txt file is considered a flag for a
-  # successfully downloaded file.
+
+  # The script checks whether there are files that have already been downloaded
+  # in the output folder. Is this the case then they are removed from the queue.
+  # An existing [filename].meta.txt file is considered a flag for a successfully
+  # downloaded file.
   
   meta_files <- dir(path=out_dir, pattern="meta.txt")
   downloaded_files <- gsub(".meta.txt","",meta_files)
   queued_files <- data[!data$filename %in% downloaded_files]
+  
+  # --check_local_files <directory>
+  # Meant to reduce download queue if files already exist inside an external
+  # directory. Checks for *.meta.txt files corresponding to the filenames in
+  # queue and copies them to the (-o)uput directory together with the actual
+  # files if they exist.
+  
+  if(nrow(queued_files) > 0 && !is.null(local_dir)) {
+    if(dir.exists(local_dir)) {
+      local_dir <- sub("/$","",local_dir)
+      ext_files <- dir(path=local_dir,pattern="meta.txt")
+      ext_files.compare <- gsub(".meta.txt","",ext_files)
+      ext_files.inqueue <- ext_files[ext_files.compare %in% queued_files$filename]
+      message(paste("found",length(ext_files.inqueue),"files in",local_dir))
+      if(length(ext_files.inqueue) > 0) {
+        for(file in ext_files.inqueue) {
+          metafile <- paste(local_dir,file,sep="/")
+          message(paste("copying",metafile))
+          file.copy(metafile,out_dir)
+          actual_file <- paste(local_dir,sub(".meta.txt",".txt",file),sep="/")
+          if(file.exists(actual_file)) {
+            message(paste("copying",actual_file))
+            file.copy(actual_file,out_dir)
+          }
+        }
+        queued_files <- queued_files[!filename %in% ext_files.compare]
+      }
+    } else {
+      warning(paste(local_dir,": directory not found"))
+    }
+  }
+  
   n_files <- nrow(queued_files)
   
   if(n_files > 0) {
@@ -252,4 +285,4 @@ export_from_csv <- function(csv_file,out_dir,chunk_size) {
   
 }
 
-export_from_csv(args$input,args$output,as.integer(args$chunks))
+export_from_csv(args$input,args$output,as.integer(args$chunks),args$local_files)

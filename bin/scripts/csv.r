@@ -187,7 +187,7 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   } else {
     # Otherwise, -d and -o arguments are pasted into the full path.
     if(length(outdir) > 0) {
-      outdir <- paste(strsplit(outdir,"/")[[1]],collapse="/") # remove terminating "/" characters
+      outdir <- sub("/$","",outdir) # remove terminating "/" characters
       output_file <- paste(paste(outdir,outfile,sep="/"))
     } else {
       output_file <- outfile
@@ -239,13 +239,13 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   # step, since we only need ChIP experiments matching ATAC/DNAse biosources.
   atac_biosources <- unique(vapply(atac_metadata,function(x) { tolower(x$sample_info$biosource_name) },character(1L)))
   
-  # 2nd Step: Collect ChiP experiments and add to csv list
+  # 2nd Step: Collect ChiP experiments and fetch metadata
   
   chip_experiments <- suppressMessages(deepblue_list_experiments(genome=genome, technique="ChIP-Seq", biosource=atac_biosources, type=chip_type, epigenetic_mark=chip_marks))
 
   if(!is.list(chip_experiments)) { 
   
-      stop(paste(genome,"No ChIP-seq data available for given arguments",sep=": "))
+    stop(paste(genome,"No ChIP-seq data available for given arguments",sep=": "))
     
   } else {
     
@@ -258,7 +258,7 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
     
     chip_biosources <- unique(tolower(vapply(chip_metadata,function(x){ x$sample_info$biosource_name },character(1L))))
 
-    # 3rd Step: Add ATAC experiments to csv if biosource has available ChiP data
+    # 3rd Step: Fetch ATAC metadata if biosource has available ChiP data
     # Likewise, we only need ATAC/DNAse data that matches biosources retained
     # by our ChIP-seq experiments.
     
