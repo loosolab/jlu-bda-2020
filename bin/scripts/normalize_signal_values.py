@@ -42,7 +42,7 @@ def normalize_all(linkage_table_path):
     :param linkage_table_path: String with path to linkage table .csv
            file containing the files that are part of the current analysis run.
     """
-    print("Reading in linkage table {0}".format(memory_usage()))
+    print("Reading in linkage table.")
 
     if os.path.exists(linkage_table_path):
         linkage_table = pd.read_csv(linkage_table_path, sep=';',
@@ -74,8 +74,8 @@ def normalize_all(linkage_table_path):
             if os.path.exists(file_paths[i] + '.ln'):
                 log_file_path = file_paths[i] + '.ln'
             else:
-                print("- Log-scaling {0} {1}".format(file_paths[i],
-                                                     memory_usage()))
+                print("- Log-scaling file {0} of {1}: {2}".format(i,
+                      len(file_paths), file_paths[i]))
                 try:
                     log_file_path = log_scale_file(file_paths[i],
                                                    column_names[i])
@@ -87,6 +87,8 @@ def normalize_all(linkage_table_path):
                         'excluded from the normalisation '
                         'process.'.format(file_paths[i]))
                     excluded_files.append(i)
+                    print("- File {} could not be normalized. Please check "
+                          "logging for further info.".format(file_paths[i]))
                     log_file_path = None
                 except (RuntimeError, UnicodeDecodeError) as err:
                     logging.error(
@@ -94,6 +96,8 @@ def normalize_all(linkage_table_path):
                         'log_scale_file: \"{}\"'.format(err) + ' for '
                         'the following file: \"{}\"'.format(file_paths[i]))
                     excluded_files.append(i)
+                    print("- File {} could not be normalized. Please check "
+                          "logging for further info.".format(file_paths[i]))
                     log_file_path = None
                 except:
                     logging.error(
@@ -101,20 +105,26 @@ def normalize_all(linkage_table_path):
                         "normalize the file {}: ".format(file_paths[i]) +
                         "{}".format(sys.exc_info()[0]))
                     excluded_files.append(i)
+                    print("- File {} could not be normalized. Please check "
+                          "logging for further info.".format(file_paths[i]))
                     log_file_path = None
         else:
             excluded_files.append(i)
             logging.error("The file {} does not exist or the file path is "
                           "incorrect and it has been excluded from "
                           "normalisation.".format(file_paths[i]))
+            print("- File {} could not be normalized. Please check "
+                  "logging for further info.".format(file_paths[i]))
 
         log_file_paths.append(log_file_path)
 
     # Find global min and global max values
     print("------ Finding global min/max values ------")
-    for log_path in log_file_paths:
+    for idx, log_path in enumerate(log_file_paths):
         if log_path is not None:
-            print("- {0} {1}".format(log_path, memory_usage()))
+            print("- Checking file {0} of {1}: {2}".format(idx,
+                                                        len(log_file_paths),
+                                                        log_path))
             try:
                 min_value, max_value = get_min_max(log_path, min_val=min_value,
                                                    max_val=max_value)
@@ -122,12 +132,18 @@ def normalize_all(linkage_table_path):
                 logging.error('The following error has occurred while calling '
                               'the method get_min_max() for the file {}: '
                               .format(log_path) + '{}'.format(err))
+                print("File {} could not be evaluated, please check logging "
+                      "for further info.".format(log_path))
+                excluded_files.append(idx)
 
     # Min-max-scale all files
     print("------ Min-max scaling all files -------")
+    cnt = 1
     for j in range(0, len(file_paths)):
         if j not in excluded_files:
-            print("- {0} {1}".format(file_paths[j], memory_usage()))
+            print("- Scaling file {0} of {1}: {2}".format(cnt,
+                  len(file_paths) - len(excluded_files), file_paths[j]))
+            cnt += 1
             try:
                 min_max_scale_file(file_paths[j], log_file_paths[j],
                                    min_value, max_value,
@@ -137,6 +153,9 @@ def normalize_all(linkage_table_path):
                     'The following error has occurred while calling '
                     'the method min_max_scale_file() for the file {}: '
                     .format(file_paths[j]) + '{}'.format(err))
+                print("- File {} could not be scaled, please check logging "
+                      "for further info.".format(file_paths[j]))
+                excluded_files.append(j)
 
     # Give update message for module's success
     if len(file_paths) > len(excluded_files):
