@@ -9,6 +9,8 @@ import xmlrpc.client as xc
 import subprocess
 from natsort import natsorted
 from tabulate import tabulate
+import numpy as np
+import re
 
 
 def main():
@@ -40,10 +42,13 @@ def main():
     # import generate_data, author: Jonathan
     import generate_data
 
+
+
     # call deepblue to get all available genomes, biosources and tfs
     url = "http://deepblue.mpi-inf.mpg.de/xmlrpc"
     server = xc.Server(url, encoding='UTF-8', allow_none=True)
     user_key = "anonymous_key"
+    connection = True
 
     try:
         genome_choices = [genome[1].lower() for genome in server.list_genomes(user_key)[1]]
@@ -60,13 +65,15 @@ def main():
         tf_choices.sort()
 
         chromosomes = {}
-        chr_choices = []
         for genome in genome_choices:
-            chrom = [x[0] for x in server.chromosomes(genome, user_key)[1]]
-            chr_choices += chrom
+            chrom = [x[0].lower() for x in server.chromosomes(genome, user_key)[1]]
             chromosomes[genome] = natsorted(chrom)
     except xc.ProtocolError:
-        raise Exception('DeepBlue is currently offline.')
+        connection = False
+        raise Exception('DeepBlue is currently offline. You can only analyse data you already downloaded.')
+    except Exception as e:
+        connection = False
+        print('You are currently offline. You can only analyse data you already downloaded.')
 
     # links to deepbluer for possible genomes, biosources and tfs
     # given to the user if script is called with -h / --help
@@ -78,16 +85,16 @@ def main():
     parser = argparse.ArgumentParser(description='Analysis of transcription factors',
                                      formatter_class=RawTextHelpFormatter)
 
-    parser.add_argument('-g', '--genome', default='hg19', type=str, choices=genome_choices,
+    parser.add_argument('-g', '--genome', default='hg19', type=str,
                         help='Allowed values are genome names from\n' + genomelink,
                         metavar='GENOME')
-    parser.add_argument('-b', '--biosource', default=['all'], type=str, nargs='+', choices=biosource_choices,
+    parser.add_argument('-b', '--biosource', default=['all'], type=str, nargs='+',
                         help='Allowed values are \'all\' or biosources from\n' + biosourcelink,
                         metavar='BIOSOURCE')
-    parser.add_argument('-t', '--tf', default=['all'], type=str, nargs='+', choices=tf_choices,
+    parser.add_argument('-t', '--tf', default=['all'], type=str, nargs='+',
                         help='Allowed values are \'all\' or epigenetic marks from\n' + tflink,
                         metavar='TF')
-    parser.add_argument('-c', '--chromosome', default=['all'], type=str, nargs='+', choices=chr_choices,
+    parser.add_argument('-c', '--chromosome', default=['all'], type=str, nargs='+',
                         help='Allowed values are \'all\' or or the chromosomes belonging to the selected genome. \n'
                              'To display the possible chromosomes, call the program with the parameter '
                              '--list_chromosomes.',
@@ -113,6 +120,14 @@ def main():
 
     args = parser.parse_args()
 
+    try:
+        lt = pd.read_csv(
+            os.path.join(args.output_path, 'data', 'linking_table.csv'),
+            sep=';', usecols=['genome', 'epigenetic_mark', 'biosource', 'chromosome'])
+        lt.drop(lt[lt['epigenetic_mark'] == ('dnasei' or 'dna accessibility')].index, inplace=True)
+    except FileNotFoundError:
+        lt = None
+
     # test if img folder for visualization exists
     if not os.path.exists(
             os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'visualization', 'src', 'assets', 'img'))):
@@ -122,29 +137,19 @@ def main():
     # print a list of all genomes and their associated chromosomes
     if args.list_chromosomes:
         for genome in genome_choices:
-            print(genome + ":\n")
-            l = len(chromosomes[genome]) % 5
-            i = 0
-            while i < len(chromosomes[genome]) - l:
-                print(" ".join(x.ljust(25) for x in chromosomes[genome][i:i + 5]))
-                i += 5
-            if l > 0:
-                print(" ".join(x.ljust(25) for x in chromosomes[genome][i:i + l]))
-            print("-" * 125)
+            print(genome + ':\n')
+            print('\n'.join([' '.join(x.ljust(len(max(chromosomes[args.genome], key=len))) for x in g) for g in
+                             np.split(chromosomes[genome], range(5, len(chromosomes[genome]), 5))]))
+            print('-' * 125)
 
     # print a table containing the downloaded genomes, biosources, tfs and chromosomes from the linking_table
     elif args.list_downloaded_data:
 
         try:
-            lt = pd.read_csv(
-                os.path.join(args.output_path, 'data', 'linking_table.csv'),
-                sep=';', usecols=['genome', 'epigenetic_mark', 'biosource', 'chromosome'])
-            lt.drop(lt[lt['epigenetic_mark'] == ('dnasei' or 'dna accessibility')].index, inplace=True)
             tab = lt.groupby(["genome", "biosource", "epigenetic_mark"]).chromosome.unique().apply(
                 lambda x: '\n'.join(x)).reset_index().to_dict(orient='list')
             print(tabulate(tab, headers=['genome', 'biosource', 'transcription factor', 'chromosome'],
                            tablefmt="fancy_grid"))
-
         except FileNotFoundError:
             raise Exception('You have not yet downloaded any data in this directory')
 
@@ -156,6 +161,33 @@ def main():
                         cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'visualization')))
     # compute analysis
     else:
+        # test if submitted chromosomes, biosources and tfs are valid
+        for chrom in args.chromosome:
+            if chrom != 'all' and chrom not in chromosomes[args.genome]:
+                parser.error('argument -c/--chromosome: invalid choice: \'' + chrom + '\' , choose from:\n' + '\n'.join(
+                    ['\t'.join(x.ljust(len(max(chromosomes[args.genome], key=len))) for x in c) for c in
+                     np.split(chromosomes[args.genome], range(5, len(chromosomes[args.genome]), 5))]))
+        for bs in args.biosource:
+            if bs != 'all' and bs not in biosource_choices:
+                possible_biosources = list(filter(re.compile('.*' + bs + '.*').match, biosource_choices))[0:30]
+                if len(possible_biosources) == 0:
+                    possible_biosources = biosource_choices[0:30]
+                parser.error('argument -b/--biosource: invalid choice: \'' + bs + '\', possible arguments are:\n' + '\n'.join(
+                    ['\t'.join(x.ljust(len(max(possible_biosources, key=len))) for x in b) for b in
+                     np.split(possible_biosources, range(2, len(possible_biosources), 2))]))
+        for one_tf in args.tf:
+            if one_tf != 'all' and one_tf not in tf_choices:
+                possible_tfs = list(filter(re.compile('.*' + one_tf + '.*').match, tf_choices))[0:30]
+                if len(possible_tfs) == 0:
+                    possible_tfs = tf_choices[0:30]
+                parser.error('argument -t/--transcription_factor: invalid choice: \'' + one_tf + '\', possible arguments are:\n' + '\n'.join(
+                    ['\t'.join(x.ljust(len(max(possible_tfs, key=len))) for x in t) for t in
+                     np.split(possible_tfs, range(4, len(possible_tfs), 4))]))
+        if args.genome not in genome_choices:
+            parser.error('argument -g/--genome: invalid choice: \'' + args.genome + '\', choose from:\n' + '\n'.join(
+                    ['\t'.join(x.ljust(len(max(genome_choices, key=len))) for x in g) for g in
+                     np.split(genome_choices, range(10, len(possible_tfs), 10))]))
+
         # test if biosource, tf or chromosome equals 'all'
         # if yes, set the value to all possible values from deepbluer
         if 'all' in args.biosource:
