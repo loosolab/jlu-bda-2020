@@ -86,6 +86,9 @@ class DataConfig:
         args.extend(self.chromosome)
         args.append("-m")
         args.extend(self.epigenetic_mark)
+        args.append("--skip_verification")
+        args.append("--append")
+        args.append("--generate_chrom_sizes")
         rc = subprocess.call(args)
         if rc != 0 or not os.path.isfile(os.path.join(path, self.csvname)):
             logging.error("error generating .csv")
@@ -102,8 +105,7 @@ class DataConfig:
         csv = os.path.join(self.outpath, "data", "download", self.csvname)
         outdir = os.path.join(self.outpath, "data", "download")
 
-        rc = subprocess.call([tool, "-i", csv, "-o", outdir,
-                              "--skip_verification", "--append", "--generate_chrom_sizes"])
+        rc = subprocess.call([tool, "-i", csv, "-o", outdir])
         if rc == 2:
             logging.info("new new data was downloaded")
             return False
