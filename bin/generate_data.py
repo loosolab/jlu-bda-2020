@@ -102,7 +102,8 @@ class DataConfig:
         csv = os.path.join(self.outpath, "data", "download", self.csvname)
         outdir = os.path.join(self.outpath, "data", "download")
 
-        rc = subprocess.call([tool, "-i", csv, "-o", outdir])
+        rc = subprocess.call([tool, "-i", csv, "-o", outdir,
+                              "--skip_verification", "--append", "--generate_chrom_sizes"])
         if rc == 2:
             logging.info("new new data was downloaded")
             return False
