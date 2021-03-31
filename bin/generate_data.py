@@ -16,7 +16,7 @@ class DataConfig:
       """
 
     def __init__(self, genome, chromosome, biosource, epigenetic_mark,
-                 output_path, csv_name, datatype):
+                 output_path, csv_name, datatype, localfiles, redoverification, offline):
         self.genome = genome
         self.chromosome = chromosome
         self.biosource = biosource
@@ -25,6 +25,9 @@ class DataConfig:
         self.outpath = output_path
         self.csvname = csv_name
         self.type = datatype
+        self.localfiles = localfiles
+        self.redoverification = redoverification
+        self.offline = offline
         self.logfile = self.setup()
 
         logging.info(self.genome + self.biosource + self.epigenetic_mark)
@@ -59,14 +62,18 @@ class DataConfig:
     def pull_data(self):
         """ Recommended way to use this wrapper. Calls all needed functions.
         """
-        self.generate_csv()
-        if self.download_data():
+        newdata = False
+        if not self.offline:
+            self.generate_csv()
+            newdata = self.download_data()
+        if newdata or self.redoverification:
             self.validate_convert_files()
             self.merge_forward_reverse()
             self.sort_files()
             self.generate_dictionaries()
         else:
-            print("No new data was downloaded, skipping validation, merging and sorting.")
+            print(
+                "No new data was downloaded, skipping validation, merging and sorting.")
         self.normalize()
 
     def generate_csv(self):
@@ -104,8 +111,12 @@ class DataConfig:
         tool = os.path.join(self.binpath, "scripts", "export_from_csv.r")
         csv = os.path.join(self.outpath, "data", "download", self.csvname)
         outdir = os.path.join(self.outpath, "data", "download")
-
-        rc = subprocess.call([tool, "-i", csv, "-o", outdir])
+        if self.localfiles is not None:
+            rc = subprocess.call(
+                [tool, "-i", csv, "-o", outdir, "-l", self.localfiles])
+        else:
+            rc = subprocess.call(
+                [tool, "-i", csv, "-o", outdir])
         if rc == 2:
             logging.info("new new data was downloaded")
             return False
