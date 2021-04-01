@@ -86,11 +86,17 @@ with these arguments:
 
 `-w, --width` single integer to determine the range of analysis on the chromosomes (peak +- w, default: 50)
 
-`-r, --redo_analysis` (optional) existing results will be executed again and overwritten
-
-`-cs, --component_size` (optional) single integer determining the component size for the analysis (will be calculated if not given)
+`-cs, --component_size` single integer determining the component size for the analysis (will be calculated if not given)
 
 `-o, --output_path` output directory for all data (default: `./`)
+
+`-r, --redo_analysis` existing results will be executed again and overwritten
+
+`--offline` runs the program in offline mode (will not query or download data from Deepblue)
+
+`--redo_file_validation` downloaded files will be validated and sorted again (even if no new files were downloaded)
+
+`--check_local_files` external directory containing Deepblue data (any files in this directory that would have to be downloaded will be copied from here into the output directory)
 
 The following (optional) arguments will not initiate the pipeline but display information gathered from already existing results:
 
@@ -137,6 +143,20 @@ The third output is a table containing the weights of the individual components 
 If any problems occur in the visualization, please check the web console of your browser.
 
 ## Known errors
+
+### generate_pickle.py throws FileNotFoundError
+
+```
+Traceback (most recent call last):
+  [...]
+  File "<path-to-repo>/bin/scripts/generate_pickle.py, line X, in parse
+    tfs = [x for x in os.listdir(os.path.join(data_path, genome, biosource, [...])]
+FileNotFoundError: [Errno 2] No such file or directory: '<output-directory>/data/...'
+```
+
+This usually occurs when the validation and sorting processes were interrupted during a previous run. The download scripts report no new data to be downloaded and the pipeline skips to the generation of dictionaries, but the required files may not have been created yet.
+
+In this case, the `--redo_file_validation` argument can be used to validate the files regardless of how many new files were downloaded.
 
 ### "Cannot find module..." when launching the web server
 
