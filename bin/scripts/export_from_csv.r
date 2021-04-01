@@ -179,6 +179,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
   meta_files <- dir(path=out_dir, pattern="meta.txt")
   downloaded_files <- gsub(".meta.txt","",meta_files)
   queued_files <- data[!data$filename %in% downloaded_files]
+  files_copied <- FALSE
   
   # --check_local_files <directory>
   # Meant to reduce download queue if files already exist inside an external
@@ -201,6 +202,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
             message(paste("copying",output_file))
             file.copy(output_file,out_dir)
           }
+          files_copied <- TRUE
         }
         queued_files <- queued_files[!filename %in% ext_files.compare]
       }
@@ -276,10 +278,15 @@ export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
     
   } else {
     
-    # All files in queue have already been downloaded
+    # All files in queue have already been downloaded (or copied)
     message("No new files to download.")
     # exit with returncode 2 for generate_data.py error handling
-    q(save="no",status=2)
+    # if not otherwise specified, this will skip the validation and sorting of 
+    # the files. if at least one file was copied from a (-l)ocal directory, exit
+    # normally since validation may be required.
+    if(!files_copied) {
+      q(save="no",status=2)
+    }
     
   }
   
