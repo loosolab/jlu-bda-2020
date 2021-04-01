@@ -10,7 +10,7 @@ import subprocess
 from natsort import natsorted
 from tabulate import tabulate
 import numpy as np
-import re
+import regex
 import sys
 
 
@@ -193,7 +193,7 @@ def main():
                              np.split(chromosomes[args.genome], range(5, len(chromosomes[args.genome]), 5))]))
             for bs in args.biosource:
                 if bs != 'all' and bs not in biosource_choices:
-                    possible_biosources = list(filter(re.compile('.*' + bs + '.*').match, biosource_choices))[0:30]
+                    possible_biosources = list(filter(regex.compile('.*' + bs + '.*').match, biosource_choices))[0:30]
                     if len(possible_biosources) == 0:
                         possible_biosources = biosource_choices[0:30]
                     parser.error('argument -b/--biosource: invalid choice: \'' + bs + '\', possible arguments are:\n' +
@@ -202,7 +202,7 @@ def main():
                                         np.split(possible_biosources, range(2, len(possible_biosources), 2))]))
             for one_tf in args.tf:
                 if one_tf != 'all' and one_tf not in tf_choices:
-                    possible_tfs = list(filter(re.compile('.*' + one_tf + '.*').match, tf_choices))[0:30]
+                    possible_tfs = list(filter(regex.compile('.*' + one_tf + '.*').match, tf_choices))[0:30]
                     if len(possible_tfs) == 0:
                         possible_tfs = tf_choices[0:30]
                     parser.error(
