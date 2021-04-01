@@ -200,10 +200,12 @@ class DataConfig:
                         genome = header.index("genome")
                         biosource = header.index("biosource")
                         chromosome = header.index("chromosome")
+                        filename = header.index("filename")
                         for row in csv_reader:
                             if (row[genome] in self.genome and
                                 row[biosource] in self.biosource and
-                                    row[chromosome] in self.chromosome):
+                                    row[chromosome] in self.chromosome and
+                                    row[filename].endswith(".bw")):
                                 outcsv.writerow(row)
         normalize_all(norm_csv)
 
