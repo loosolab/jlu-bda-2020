@@ -74,7 +74,7 @@ def normalize_all(linkage_table_path):
             if os.path.exists(file_paths[i] + '.ln'):
                 log_file_path = file_paths[i] + '.ln'
             else:
-                print("- Log-scaling file {0} of {1}: {2}".format(i,
+                print("- Log-scaling file {0} of {1}: {2}".format(i + 1,
                       len(file_paths), file_paths[i]))
                 try:
                     log_file_path = log_scale_file(file_paths[i],
@@ -122,9 +122,8 @@ def normalize_all(linkage_table_path):
     print("------ Finding global min/max values ------")
     for idx, log_path in enumerate(log_file_paths):
         if log_path is not None:
-            print("- Checking file {0} of {1}: {2}".format(idx,
-                                                        len(log_file_paths),
-                                                        log_path))
+            print("- Checking file {0} of {1}: {2}".format(idx + 1,
+                  len(log_file_paths), log_path))
             try:
                 min_value, max_value = get_min_max(log_path, min_val=min_value,
                                                    max_val=max_value)
@@ -161,8 +160,8 @@ def normalize_all(linkage_table_path):
     if len(file_paths) > len(excluded_files):
         print(str(len(file_paths) - len(excluded_files)) + " of " +
               str(len(file_paths)) + "files were successfully normalised. If "
-                                     "not all files were normalised, check logging for further "
-                                     "information.")
+              "not all files were normalised, check logging for further "
+              "information.")
     else:
         logging.warning("0 files were normalized.")
 
@@ -200,14 +199,16 @@ def log_scale_file(file_path, column_names=None):
                 step = 1000000
                 while i < chrs[chrom]:
 
-                    intervals = bw.intervals(chrom, i, i+step if i+step < chrs[chrom] else chrs[chrom])
+                    intervals = bw.intervals(chrom, i, i+step if i+step <
+                                             chrs[chrom] else chrs[chrom])
 
                     if intervals:
                         chromosomes = [chrom] * len(intervals)
                         starts = [interval[0] for interval in intervals]
                         ends = [interval[1] for interval in intervals]
 
-                        signal_values = [interval[2] if interval[2] != 0 else 1 for interval in intervals]
+                        signal_values = [interval[2] if interval[2] != 0 else 1
+                                         for interval in intervals]
                         log_values = numpy.log(signal_values)
                         bw_log.addEntries(chromosomes, starts, ends=ends,
                                           values=log_values)
@@ -302,8 +303,10 @@ def min_max_scale_file(file_path, log_file_path, min_val,
             step = 1000000
 
             while i < chrs[chrom]:
-                intervals = bw.intervals(chrom, i, i+step if i+step < chrs[chrom] else chrs[chrom])
-                log_intervals = bw_log.intervals(chrom,i,i+step if i+step < chrs[chrom] else chrs[chrom])
+                intervals = bw.intervals(chrom, i, i+step if i+step <
+                                        chrs[chrom] else chrs[chrom])
+                log_intervals = bw_log.intervals(chrom,i,i+step if i+step <
+                                                 chrs[chrom] else chrs[chrom])
 
                 if intervals:
                     chromosomes = [chrom]*len(intervals)
@@ -311,7 +314,9 @@ def min_max_scale_file(file_path, log_file_path, min_val,
                     ends = [interval[1] for interval in intervals]
 
                     # Min-max scale the log-scaled values
-                    min_max_values = [(interval[2] - min_val) / (max_val - min_val) for interval in log_intervals]
+                    min_max_values = [(interval[2] - min_val) /
+                                      (max_val - min_val) for
+                                      interval in log_intervals]
                     bw_min_max.addEntries(chromosomes, starts, ends=ends,
                                       values=min_max_values)
                     i=ends[-1]
@@ -407,13 +412,3 @@ def is_float(value):
         return True
     except ValueError:
         return False
-
-
-def memory_usage():
-    """ Returns a string with the current RAM usage in GB and percent """
-    v = psutil.virtual_memory()
-    d = v._asdict()
-
-    s = "(RAM usage: {0:.2f}GB ({1}%))".format(d["used"] / (1024.0 ** 3),
-                                               d["percent"])
-    return s
