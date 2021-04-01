@@ -230,7 +230,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
       
       row <- queued_files[i,]
       filename <- row$filename
-      chr <- sub(".*\\.(chr.*?)(\\..*|$)","\\1",filename)
+      chr <- tolower(sub(".*\\.(chr.*?)(\\..*|$)","\\1",filename))
       id <- row$experiment_id
       
       if(row$technique == "chip-seq") {
@@ -241,7 +241,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
       } else {
         
         genom <- row$genome
-        this_chrom_size <- chrom_sizes[[genom]][chrom_sizes[[genom]]$id == chr]$name
+        this_chrom_size <- chrom_sizes[[genom]][id == chr]$name
         chunks <- seq(1,this_chrom_size,by=chunk_size)
         n_chunks <- length(chunks)
         
