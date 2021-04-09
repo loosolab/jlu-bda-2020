@@ -130,11 +130,11 @@ This command will download and analyze all data for transcription factor "AR", a
 
 The web application running on `localhost:4200` lets you select the transcription factors you want to look at. Three figures are currently available for each TF:
 
-<img src="docs/img/ar_20_Contour.png">
+![ar_20_Contour](https://user-images.githubusercontent.com/26332337/114243219-7f96ea00-998c-11eb-9de7-26adf0dc3483.png)
 
 3d Contour Plot: This plot shows the means of the ATAC scores on the x-axis, the ChIP scores on the y-axis and the density of these values on the z-axis.
 
-<img src="docs/img/ar_20_Scatter.png" width="500">
+![ar_20_Scatter](https://user-images.githubusercontent.com/26332337/114243247-8aea1580-998c-11eb-80a6-bf1589a25f46.png)
 
 Density Scatter Plot: This plot contains the means of the ATAC scores on the x-axis and the ChIP scores on the y-axis. The histograms on both axes are showing the distribution of respective ATAC/ChIP scores. This plot also contains a heatmap, which shows the densities of the values used. (Zooming in may be required to see the details.)
 
