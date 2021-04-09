@@ -233,7 +233,10 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   }
   message(paste("fetching",length(atac_experiments),"ATAC/DNAse-seq experiments ..."))
   
-  atac_metadata <- lapply(atac_experiments,function(x){ suppressMessages(deepblue_info(x)) })
+  atac_metadata <- lapply(atac_experiments,function(x){
+    metadata <- suppressMessages(deepblue_info(x))
+    return(metadata[!names(metadata) %in% c("extra_metadata","upload_info","columns")])
+  })
   
   # The biosources are extracted individually to create a filter for the next
   # step, since we only need ChIP experiments matching ATAC/DNAse biosources.
@@ -254,6 +257,7 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
     
     chip_metadata <- lapply(chip_experiments,function(c) {
       metadata <- suppressMessages(deepblue_info(c))
+      return(metadata[!names(metadata) %in% c("extra_metadata","upload_info","columns")])
     })
     
     chip_biosources <- unique(tolower(vapply(chip_metadata,function(x){ x$sample_info$biosource_name },character(1L))))
