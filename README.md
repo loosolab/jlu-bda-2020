@@ -121,22 +121,22 @@ $ ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server
 ## Example case
 
 ```bash
-$ python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr1
+$ python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr20
 ```
 
-This command will download and analyze all data for transcription factor "AR", a known activator, sampled from chromosome 1 of the biosource "kidney".
+This command will download and analyze all data for transcription factor "AR", a known activator, sampled from chromosome 20 of the biosource "kidney".
 
 **Results**
 
-For each transcription factor analyzed in the process, a set of three figures will be exported:
+The web application running on `localhost:4200` lets you select the transcription factors you want to look at. Three figures are currently available for each TF:
 
-<img src="docs/img/rela1.png" width="500">
+<img src="docs/img/ar_20_Contour.png">
 
-Density Scatter Plot: This scatter plot contains the means of the ATAC scores on the x-axis and the ChIP scores on the y-axis. The histograms on both axes are showing the distribution of respective ATAC/ChIP scores. This plot also contains a heatmap, which shows the densities of the values used. (Zooming in may be required to see the details.)
+3d Contour Plot: This plot shows the means of the ATAC scores on the x-axis, the ChIP scores on the y-axis and the density of these values on the z-axis.
 
-<img src="docs/img/rela4.png" width="500">
+<img src="docs/img/ar_20_Scatter.png" width="500">
 
-3d Contour Plot: This 3D contour plot shows the means of the ATAC scores on the x-axis, the ChIP scores on the y-axis and the density of these values on the z-axis.
+Density Scatter Plot: This plot contains the means of the ATAC scores on the x-axis and the ChIP scores on the y-axis. The histograms on both axes are showing the distribution of respective ATAC/ChIP scores. This plot also contains a heatmap, which shows the densities of the values used. (Zooming in may be required to see the details.)
 
 The third output is a table containing the weights of the individual components of the analysis.
 
