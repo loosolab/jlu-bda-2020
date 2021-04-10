@@ -31,7 +31,6 @@ import numpy
 import pyBigWig
 import logging
 import sys
-import psutil
 
 
 def normalize_all(linkage_table_path):
@@ -42,7 +41,7 @@ def normalize_all(linkage_table_path):
     :param linkage_table_path: String with path to linkage table .csv
            file containing the files that are part of the current analysis run.
     """
-    print("Reading in linkage table.")
+    print("------ Reading in linkage table ------")
 
     if os.path.exists(linkage_table_path):
         linkage_table = pd.read_csv(linkage_table_path, sep=';',
@@ -60,8 +59,8 @@ def normalize_all(linkage_table_path):
     max_value = -math.inf
 
     # Give update message for module
-    print("Now starting normalisation process. " + str(len(file_paths)) +
-          " files will be normalised.")
+    print("------ Now starting normalisation process. " + str(len(file_paths)) +
+          " files will be normalised ------")
 
     # Check all files to see if they have been log-scaled before or not.
     # If they have, then add path of existing .ln file to log_file_paths,
@@ -136,7 +135,7 @@ def normalize_all(linkage_table_path):
                 excluded_files.append(idx)
 
     # Min-max-scale all files
-    print("------ Min-max scaling all files -------")
+    print("------ Min-max scaling files -------")
     cnt = 1
     for j in range(0, len(file_paths)):
         if j not in excluded_files:
@@ -247,7 +246,7 @@ def log_scale_file(file_path, column_names=None):
                 file_path))
 
 
-def get_min_max(log_file_path, min_val=math.inf, max_val=-math.inf):
+def get_min_max(log_file_path, min_val=0, max_val=-math.inf):
     """
     Method finds min value and max value in a .log file.
 
