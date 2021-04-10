@@ -28,7 +28,6 @@ def main():
                               the end position is determined by adding the width to the summit.
     parameter -o / --output_path: the path were the data and results should be stored
     parameter -cs / --component_size: single integer determining the component size for the analysis
-    parameter --redo_analysis= : existing results will be recalculated
     parameter --visualize= : calls visualization for all existing results
     parameter --list_chromosomes: prints a list of all genomes with their associated chromosomes
     parameter --list_downloaded_data: prints a table containing all downloaded genomes, biosources, tfs and chromosomes
@@ -79,8 +78,6 @@ def main():
                         type=str, nargs='?', help='The path were the downloaded data and the results will be stored.')
     parser.add_argument('-cs', '--component_size', type=int, nargs='?',
                         help='single integer determining the component size for the analysis')
-    parser.add_argument('--redo_analysis', action='store_true',
-                        help='existing results will be executed again and overwritten if argument is submitted')
     parser.add_argument('--offline', action='store_true',
                         help='runs the program in offline mode')
     parser.add_argument('--redo_file_validation', action='store_true',
@@ -165,7 +162,7 @@ def main():
                     chrom = [x[0].lower() for x in server.chromosomes(genome, user_key)[1]]
                     chromosomes[genome] = natsorted(chrom)
             except Exception as e:
-                sys.exit(e + ': No connection could be established to deepblue. If you want to run an analysis with '
+                sys.exit(str(e) + ': No connection could be established to deepblue. If you want to run an analysis with '
                              'already downloaded data, please call the program with the parameter \'--offline\'.')
 
         # print a list of all genomes and their associated chromosomes
@@ -198,8 +195,8 @@ def main():
                         possible_biosources = biosource_choices[0:30]
                     parser.error('argument -b/--biosource: invalid choice: \'' + bs + '\', possible arguments are:\n' +
                                  '\n'.join(
-                                    ['\t'.join(x.ljust(len(max(possible_biosources, key=len))) for x in b) for b in
-                                        np.split(possible_biosources, range(2, len(possible_biosources), 2))]))
+                                     ['\t'.join(x.ljust(len(max(possible_biosources, key=len))) for x in b) for b in
+                                      np.split(possible_biosources, range(2, len(possible_biosources), 2))]))
             for one_tf in args.tf:
                 if one_tf != 'all' and one_tf not in tf_choices:
                     possible_tfs = list(filter(regex.compile('.*' + one_tf + '.*').match, tf_choices))[0:30]
@@ -221,7 +218,10 @@ def main():
             if 'all' in args.tf:
                 args.tf = tf_choices
 
+            all_chroms = False
             if 'all' in args.chromosome:
+                if not args.offline:
+                    all_chroms = True
                 args.chromosome = chromosomes[args.genome]
 
             # download data from download_dict
@@ -231,9 +231,9 @@ def main():
             requested_data.pull_data()
 
             # run the script score.py and store the calculated scores in the dictionary 'scores'
-            scores, exist = scripts.score.findarea(args.width, args.genome.lower(), [x.lower() for x in args.biosource],
-                                                   [x.lower() for x in args.tf], args.chromosome, args.output_path,
-                                                   args.redo_analysis, args.component_size)
+            scores = scripts.score.findarea(args.width, args.genome.lower(), [x.lower() for x in args.biosource],
+                                            [x.lower() for x in args.tf], args.chromosome, args.output_path,
+                                            args.component_size)
 
             # test if 'scores' is an empty dictionary
             # if not, generate plots with the script analyse_main.py
@@ -242,10 +242,9 @@ def main():
             # and transcription factor and exit the program
             if scores:
                 scripts.analyse_main.TF_analyser(n_comps=args.component_size, genome=args.genome, width=args.width,
-                                                 path=args.output_path, chromosome=args.chromosome).mainloop(
+                                                 path=args.output_path,
+                                                 chromosome='all' if all_chroms else args.chromosome).mainloop(
                     data=scores)
-
-            if scores or exist:
 
                 subprocess.Popen(['python',
                                   os.path.join(os.path.dirname(__file__), 'scripts', 'visualization_app_api_start.py')])
