@@ -46,7 +46,7 @@ def getChecked(data):
     The return of this function is a dictionary containing the selected biosources and tfs.
     """
     whats_checked_bio_tf={}
-    #analyze what was checked by the user
+    #analyze what was checked by the user, all biosources only checked tfs
     for biosource_obj in data:
         biosource = biosource_obj["item"]
         whats_checked_bio_tf[biosource]=[]
@@ -58,7 +58,14 @@ def getChecked(data):
             for tf_obj in biosource_obj["children"]:
                 if tf_obj["checked"]:
                     whats_checked_bio_tf[biosource].append(tf_obj["item"])
-    return whats_checked_bio_tf
+    
+    #remove empty biosources
+    only_checked={}
+    for biosource in whats_checked_bio_tf:
+        if whats_checked_bio_tf[biosource]!=[]:
+            only_checked[biosource]=whats_checked_bio_tf[biosource]
+            
+    return only_checked
     
 
 def getRawData(checked_data):
