@@ -50,6 +50,7 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
     :param conversion_tool: String with path to bedGraphToBigWig tool
     :param merge_tool: String with path to bigWigMerge tool
     """
+    print("------ Merge forward/reverse reads ------")
     print("------ Reading in linking table ------")
 
     if os.path.exists(linkage_table_path):
@@ -62,7 +63,7 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
 
     pairs = find_pairs(linkage_frame)
     print("{} pairs were found".format(len(pairs)))
-    
+
     if len(pairs) > 0:
         pairs_merge = []
         converted_idxs = []
