@@ -16,11 +16,12 @@ def parse(data_path):
 
     # read linking_table to get all available genomes, biosources and tfs
     lt = pd.read_csv(os.path.join(data_path, 'linking_table.csv'), sep=';',
-                     usecols=['genome', 'epigenetic_mark', 'biosource_name'])
+                     usecols=['genome', 'epigenetic_mark', 'biosource'])
     genomes = set(lt.values[:, 0])
-    lt_tfs = set(lt.values[:, 1][lt.values[:, 1] != ('dnasei' or 'dna accessibility')])
-    lt_biosources = set(x for x in lt.values[:, 2])
-
+    lt_tfs = set(lt.values[:, 2][lt.values[:, 2] != ('dnasei' or 'dna accessibility')])
+    print(lt_tfs)
+    lt_biosources = set(x for x in lt.values[:, 1])
+    print(lt_biosources)
     # go through every folder for genomes in the linking_table
     for genome in genomes:
 
@@ -80,7 +81,7 @@ def parse(data_path):
             atac={}
             for c in atac_chr_dict:
                 atac[c]=os.path.join(data_path, genome, biosource, 'atac-seq',max(atac_chr_dict[c], key=lambda key: atac_chr_dict[c][key]))
-
+            
             with open(os.path.join(data_path, 'pickledata', genome, 'atac-seq', biosource + '.pickle'),
                       'wb') as handle:
                 pickle.dump(atac, handle, protocol=pickle.HIGHEST_PROTOCOL)

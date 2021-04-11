@@ -1,6 +1,8 @@
 # TF Analyzer
 
-This tool allows for the analysis and classification of transcription factors by calculating the relations between TF binding sites and chromatin accessibility, using the [Deepblue Epigenomic Data Server](https://deepblue.mpi-inf.mpg.de/) to link epigenomic ChIP-seq and ATAC/DNAse-seq data by biosource (i.e. cell type).
+## Introduction
+
+This tool allows for the analysis and classification of transcription factors (TFs) by calculating the relations between observed TF binding sites and chromatin accessibility, using the [Deepblue Epigenomic Data Server](https://deepblue.mpi-inf.mpg.de/) to link epigenomic ChIP-seq and ATAC/DNAse-seq data by biosource (i.e. cell type).
 
 The latest working build can be cloned from the `dev` branch.
 
@@ -9,16 +11,18 @@ The latest working build can be cloned from the `dev` branch.
  1. Link and download epigenomic data matching user-requested biosources, TFs, genomes and chromosomes
  2. Convert, normalize and sort downloaded data if necessary
  3. Calculate relations between ChIP and ATAC data for each TF and save results as CSV files
- 4. Visualize data
+ 4. Visualize data through a self-hosted web application
  
 ## Requirements
 
  - Python 3 and pip
  - [Conda](https://docs.conda.io/projects/conda/en/latest/index.html)
- - [npm](https://www.npmjs.com/)
  
 ## Setup
-1. Run `conda env create -f environment.yml` to create a conda environment with the following modules:
+First, we need to create a conda environment with the following dependencies:
+
+**environment.yml**
+
 ```
 channels:
   - bioconda
@@ -46,12 +50,31 @@ dependencies:
   - psutil=5.8.0
 ```
 
-2. Run `conda activate tf_analyzer` to activate the environment. This needs to stay activated in order for the tool to work.
+```bash
+$ conda env create -f environment.yml
+```
 
-3. From the repository root, navigate to `visualization/` and execute the following command: `npm install -g @angular/cli`.
+The newly created environment must then be activated before running the pipeline: 
+
+```bash
+$ conda activate tf_analyzer
+``` 
+
+Finally, from the repository root, navigate to `visualization/` and execute the following commands:
+
+```bash
+$ npm install -g @angular/cli
+
+$ npm install --save-dev @angular-devkit/build-angular
+```
 
 ## How to use
-The pipeline can be initiated by running `python bin/tf_analyzer.py` with these arguments:
+The pipeline can be initiated by running
+```bash
+$ python bin/tf_analyzer.py
+```
+
+with these arguments:
 
 `-g, --genome` genome (default: hg19)
 
@@ -61,13 +84,19 @@ The pipeline can be initiated by running `python bin/tf_analyzer.py` with these 
 
 `-c, --chromosome` list of chromosomes (default: all chromosomes of the selected genome)
 
-`-w, --width` single integer to determine the range of analysis (peak +- w, default: 50)
+`-w, --width` single integer to determine the range of analysis on the chromosomes (peak +- w, default: 50)
 
-`-r, --redo_analysis` (optional) existing results will be executed again and overwritten
-
-`-cs, --component_size` (optional) single integer determining the component size for the analysis (will be calculated if not given)
+`-cs, --component_size` single integer determining the component size for the analysis (will be calculated if not given)
 
 `-o, --output_path` output directory for all data (default: `./`)
+
+`-r, --redo_analysis` existing results will be executed again and overwritten
+
+`--offline` runs the program in offline mode (will not query or download data from Deepblue)
+
+`--redo_file_validation` downloaded files will be validated and sorted again (even if no new files were downloaded)
+
+`--check_local_files` external directory containing Deepblue data (any files in this directory that would have to be downloaded will be copied from here into the output directory)
 
 The following (optional) arguments will not initiate the pipeline but display information gathered from already existing results:
 
@@ -83,24 +112,31 @@ Use the help argument (`-h` or `--help`) to display a more detailed list of avai
 
 **Note:** Please note that all arguments must be written in *lower case* letters. Multiple arguments (where applicable) must be divided by spaces (e.g. `-b "kidney" "huvec cell" "regulatory t cell"`).
 
-The results can be found in the `plots` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`. If the application is launched through a virtual machine, it can be accessed locally via SSH (`ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server`).
+The results can be found in the `plots` folder inside the output directory. To view the plots in detail, a web application is available at `http://localhost:4200/`. If the application is launched through a virtual machine, it can be accessed locally via SSH:
+
+```bash
+$ ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server
+```
  
 ## Example case
-`python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr1`
 
-This command will download and analyze all data for transcription factor "AR", a known activator, sampled from chromosome 1 of the biosource "kidney".
+```bash
+$ python bin/tf_analyzer.py -g hg19 -b kidney -t ar -c chr20
+```
+
+This command will download and analyze all data for transcription factor "AR", a known activator, sampled from chromosome 20 of the biosource "kidney".
 
 **Results**
 
-For each transcription factor analyzed in the process, a set of three figures will be exported:
+The web application running on `localhost:4200` lets you select the transcription factors you want to look at. Three figures are currently available for each TF:
 
-<img src="docs/img/rela1.png" width="500">
+![ar_20_Contour](https://user-images.githubusercontent.com/26332337/114243219-7f96ea00-998c-11eb-9de7-26adf0dc3483.png)
 
-Density Scatter Plot: This scatter plot contains the means of the ATAC scores on the x-axis and the ChIP scores on the y-axis. The histograms on both axes are showing the distribution of respective ATAC/ChIP scores. This plot also contains a heatmap, which shows the densities of the values used. (Zooming in may be required to see the details.)
+3d Contour Plot: This plot shows the means of the ATAC scores on the x-axis, the ChIP scores on the y-axis and the density of these values on the z-axis.
 
-<img src="docs/img/rela4.png" width="500">
+![ar_20_Scatter](https://user-images.githubusercontent.com/26332337/114243247-8aea1580-998c-11eb-80a6-bf1589a25f46.png)
 
-3d Contour Plot: This 3D contour plot shows the means of the ATAC scores on the x-axis, the ChIP scores on the y-axis and the density of these values on the z-axis.
+Density Scatter Plot: This plot contains the means of the ATAC scores on the x-axis and the ChIP scores on the y-axis. The histograms on both axes are showing the distribution of respective ATAC/ChIP scores. This plot also contains a heatmap, which shows the densities of the values used. (Zooming in may be required to see the details.)
 
 The third output is a table containing the weights of the individual components of the analysis.
 
@@ -108,13 +144,50 @@ If any problems occur in the visualization, please check the web console of your
 
 ## Known errors
 
+### generate_pickle.py throws FileNotFoundError
+
+```
+Traceback (most recent call last):
+  [...]
+  File "<path-to-repo>/bin/scripts/generate_pickle.py, line X, in parse
+    tfs = [x for x in os.listdir(os.path.join(data_path, genome, biosource, [...])]
+FileNotFoundError: [Errno 2] No such file or directory: '<output-directory>/data/...'
+```
+
+This usually occurs when the validation and sorting processes were interrupted during a previous run. The download scripts report no new data to be downloaded and the pipeline skips to the generation of dictionaries, but the required files may not have been created yet.
+
+In this case, the `--redo_file_validation` argument can be used to validate the files regardless of how many new files were downloaded.
+
 ### "Cannot find module..." when launching the web server
+
 ```
 An unhandled exception occured: Cannot find module '@angular-devkit/build-angular/package.json'
 Require stack:
 [...]
 ```
-To fix this, run `npm install --save-dev @angular-devkit/build-angular` inside the `visualization/` folder. Afterwards, run `ng serve` (in the same folder) to start the server.
+
+To fix this, navigate to the `visualization/` directory and run
+
+```bash
+$ npm install --save-dev @angular-devkit/build-angular
+```
+
+Afterwards, run
+
+```bash
+$ ng serve
+```
+
+in the same folder or
+
+```bash
+$ python ../bin/tf_analyzer.py --visualize
+```
+
+to start the server.
+
+### Ports/address already in use when running web app
+The web application currently listens on ports `4200` and `5000`. Assure that no other program is using them (e.g. with `netstat` on Linux) before running the TF Analyzer.
 
 ## License
 (to be added)

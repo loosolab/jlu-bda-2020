@@ -8,11 +8,6 @@ log-scaled
 - min-max-scale all files (to a range of 0-1) with global min and max values
 derived from the log-scaled values of all files in current analysis run
 
-To-do:
-- Bin size problem:
-    - Narrow and broad peaks -> narrow peaks only has summit? One value for
-      multiple pos? Problem that needs solving
-
 
 Use as follows:
 
@@ -31,7 +26,6 @@ import numpy
 import pyBigWig
 import logging
 import sys
-import psutil
 
 
 def normalize_all(linkage_table_path):
@@ -42,7 +36,7 @@ def normalize_all(linkage_table_path):
     :param linkage_table_path: String with path to linkage table .csv
            file containing the files that are part of the current analysis run.
     """
-    print("Reading in linkage table {0}".format(memory_usage()))
+    print("------ Reading in linkage table ------")
 
     if os.path.exists(linkage_table_path):
         linkage_table = pd.read_csv(linkage_table_path, sep=';',
@@ -60,8 +54,8 @@ def normalize_all(linkage_table_path):
     max_value = -math.inf
 
     # Give update message for module
-    print("Now starting normalisation process. " + str(len(file_paths)) +
-          " files will be normalised.")
+    print("------ Now starting normalisation process. " + str(len(file_paths)) +
+          " files will be normalised ------")
 
     # Check all files to see if they have been log-scaled before or not.
     # If they have, then add path of existing .ln file to log_file_paths,
@@ -74,8 +68,8 @@ def normalize_all(linkage_table_path):
             if os.path.exists(file_paths[i] + '.ln'):
                 log_file_path = file_paths[i] + '.ln'
             else:
-                print("- Log-scaling {0} {1}".format(file_paths[i],
-                                                     memory_usage()))
+                print("- Log-scaling file {0} of {1}: {2}".format(i + 1,
+                      len(file_paths), file_paths[i]))
                 try:
                     log_file_path = log_scale_file(file_paths[i],
                                                    column_names[i])
@@ -87,6 +81,8 @@ def normalize_all(linkage_table_path):
                         'excluded from the normalisation '
                         'process.'.format(file_paths[i]))
                     excluded_files.append(i)
+                    print("- File {} could not be normalized. Please check "
+                          "logging for further info.".format(file_paths[i]))
                     log_file_path = None
                 except (RuntimeError, UnicodeDecodeError) as err:
                     logging.error(
@@ -94,6 +90,8 @@ def normalize_all(linkage_table_path):
                         'log_scale_file: \"{}\"'.format(err) + ' for '
                         'the following file: \"{}\"'.format(file_paths[i]))
                     excluded_files.append(i)
+                    print("- File {} could not be normalized. Please check "
+                          "logging for further info.".format(file_paths[i]))
                     log_file_path = None
                 except:
                     logging.error(
@@ -101,20 +99,25 @@ def normalize_all(linkage_table_path):
                         "normalize the file {}: ".format(file_paths[i]) +
                         "{}".format(sys.exc_info()[0]))
                     excluded_files.append(i)
+                    print("- File {} could not be normalized. Please check "
+                          "logging for further info.".format(file_paths[i]))
                     log_file_path = None
         else:
             excluded_files.append(i)
             logging.error("The file {} does not exist or the file path is "
                           "incorrect and it has been excluded from "
                           "normalisation.".format(file_paths[i]))
+            print("- File {} could not be normalized. Please check "
+                  "logging for further info.".format(file_paths[i]))
 
         log_file_paths.append(log_file_path)
 
     # Find global min and global max values
     print("------ Finding global min/max values ------")
-    for log_path in log_file_paths:
+    for idx, log_path in enumerate(log_file_paths):
         if log_path is not None:
-            print("- {0} {1}".format(log_path, memory_usage()))
+            print("- Checking file {0} of {1}: {2}".format(idx + 1,
+                  len(log_file_paths), log_path))
             try:
                 min_value, max_value = get_min_max(log_path, min_val=min_value,
                                                    max_val=max_value)
@@ -122,12 +125,18 @@ def normalize_all(linkage_table_path):
                 logging.error('The following error has occurred while calling '
                               'the method get_min_max() for the file {}: '
                               .format(log_path) + '{}'.format(err))
+                print("File {} could not be evaluated, please check logging "
+                      "for further info.".format(log_path))
+                excluded_files.append(idx)
 
     # Min-max-scale all files
-    print("------ Min-max scaling all files -------")
+    print("------ Min-max scaling files -------")
+    cnt = 1
     for j in range(0, len(file_paths)):
         if j not in excluded_files:
-            print("- {0} {1}".format(file_paths[j], memory_usage()))
+            print("- Scaling file {0} of {1}: {2}".format(cnt,
+                  len(file_paths) - len(excluded_files), file_paths[j]))
+            cnt += 1
             try:
                 min_max_scale_file(file_paths[j], log_file_paths[j],
                                    min_value, max_value,
@@ -137,13 +146,16 @@ def normalize_all(linkage_table_path):
                     'The following error has occurred while calling '
                     'the method min_max_scale_file() for the file {}: '
                     .format(file_paths[j]) + '{}'.format(err))
+                print("- File {} could not be scaled, please check logging "
+                      "for further info.".format(file_paths[j]))
+                excluded_files.append(j)
 
     # Give update message for module's success
     if len(file_paths) > len(excluded_files):
         print(str(len(file_paths) - len(excluded_files)) + " of " +
               str(len(file_paths)) + "files were successfully normalised. If "
-                                     "not all files were normalised, check logging for further "
-                                     "information.")
+              "not all files were normalised, check logging for further "
+              "information.")
     else:
         logging.warning("0 files were normalized.")
 
@@ -181,14 +193,16 @@ def log_scale_file(file_path, column_names=None):
                 step = 1000000
                 while i < chrs[chrom]:
 
-                    intervals = bw.intervals(chrom, i, i+step if i+step < chrs[chrom] else chrs[chrom])
+                    intervals = bw.intervals(chrom, i, i+step if i+step <
+                                             chrs[chrom] else chrs[chrom])
 
                     if intervals:
                         chromosomes = [chrom] * len(intervals)
                         starts = [interval[0] for interval in intervals]
                         ends = [interval[1] for interval in intervals]
 
-                        signal_values = [interval[2] if interval[2] != 0 else 1 for interval in intervals]
+                        signal_values = [interval[2] if interval[2] != 0 else 1
+                                         for interval in intervals]
                         log_values = numpy.log(signal_values)
                         bw_log.addEntries(chromosomes, starts, ends=ends,
                                           values=log_values)
@@ -227,7 +241,7 @@ def log_scale_file(file_path, column_names=None):
                 file_path))
 
 
-def get_min_max(log_file_path, min_val=math.inf, max_val=-math.inf):
+def get_min_max(log_file_path, min_val=0, max_val=-math.inf):
     """
     Method finds min value and max value in a .log file.
 
@@ -283,8 +297,10 @@ def min_max_scale_file(file_path, log_file_path, min_val,
             step = 1000000
 
             while i < chrs[chrom]:
-                intervals = bw.intervals(chrom, i, i+step if i+step < chrs[chrom] else chrs[chrom])
-                log_intervals = bw_log.intervals(chrom,i,i+step if i+step < chrs[chrom] else chrs[chrom])
+                intervals = bw.intervals(chrom, i, i+step if i+step <
+                                        chrs[chrom] else chrs[chrom])
+                log_intervals = bw_log.intervals(chrom,i,i+step if i+step <
+                                                 chrs[chrom] else chrs[chrom])
 
                 if intervals:
                     chromosomes = [chrom]*len(intervals)
@@ -292,7 +308,9 @@ def min_max_scale_file(file_path, log_file_path, min_val,
                     ends = [interval[1] for interval in intervals]
 
                     # Min-max scale the log-scaled values
-                    min_max_values = [(interval[2] - min_val) / (max_val - min_val) for interval in log_intervals]
+                    min_max_values = [(interval[2] - min_val) /
+                                      (max_val - min_val) for
+                                      interval in log_intervals]
                     bw_min_max.addEntries(chromosomes, starts, ends=ends,
                                       values=min_max_values)
                     i=ends[-1]
@@ -388,13 +406,3 @@ def is_float(value):
         return True
     except ValueError:
         return False
-
-
-def memory_usage():
-    """ Returns a string with the current RAM usage in GB and percent """
-    v = psutil.virtual_memory()
-    d = v._asdict()
-
-    s = "(RAM usage: {0:.2f}GB ({1}%))".format(d["used"] / (1024.0 ** 3),
-                                               d["percent"])
-    return s
