@@ -11,6 +11,10 @@ import scripts.repository
 
 
 def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath, mode):
+    """
+    This function creates a dictionary containing the mean for both CHIP-seq and ATAC-seq scores over a specified area. 
+    This area needs to be specified at first, with the help of the CHIP-seq pickle and the value "w".
+    """
     # path to pickledata
     picklepath = os.path.abspath(
         os.path.join(outpath, 'data', 'pickledata'))
@@ -70,8 +74,7 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath, mode):
                                         chip_score = chip.intervals(chromosom, peaklocationstart, peaklocationend)
                                         atac_score = atac.intervals(chromosom, peaklocationstart, peaklocationend)
 
-                                        # calculate mean of chip and atac scores
-
+                                        # calculate mean of chip and atac scores and save them into a dict
                                         calculationls = [peaklocationstart, peaklocationend]
                                         for i in (chip_score, atac_score):
                                             calculationls.append(
@@ -98,6 +101,9 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath, mode):
 
 
 def calculate_mean(i, peaklocationstart, peaklocationend):
+    """
+    This function is for calculating the mean over the specified area and returns this mean.
+    """
     length = peaklocationend - peaklocationstart
     mean = 0
     if i:
