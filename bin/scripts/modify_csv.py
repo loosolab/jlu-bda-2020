@@ -7,7 +7,7 @@ Created on Wed Mar 24 17:56:52 2021
 """
 from scripts.repository import Repository as rp
 import pandas as pd
-import sys
+import os
 
 class modifyCSV:
     
@@ -60,21 +60,25 @@ class modifyCSV:
             data.pop('covariances')
             data.pop('weights')
             data.pop('path')
+            data.pop('vis_filename')
             
             count = 0
             tochange = []
+            
+            print("looking for duplicates in result.csv")
             
             for row in range(len(data)):
                 
                 if((data.iloc[row].values == df.values).all()):
                     
+                    print("replacing old item in result.csv")
                     tochange.append(count)
             
                 count += 1    
             
             ori.drop(ori.index[tochange], inplace=True)
             
-            # os.remove(self.path)
+            os.remove(self.path)
             ori.to_csv(self.path, index=False)
 
         except:
@@ -85,5 +89,5 @@ if __name__ == '__main__':
 
     parameters = ["Genome",	"width","auto","chr1","GM12878","ARID3A_ENCFF003VDB"]
     
-    modifyCSV("/home/jan/python-workspace/angewendete_daten_analyse/results/rsult.csv").compare(parameters)
+    modifyCSV("/home/jan/python-workspace/jlu-bda-2020/results/result.csv").compare(parameters)
     #df = pd.DataFrame(data=numpy_data, columns=['genome','width','mode','chr','biosource','tf'])

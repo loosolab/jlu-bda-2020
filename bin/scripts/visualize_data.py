@@ -114,7 +114,7 @@ class VisualizeData:
             # plt.colorbar()
             figure_path = self.path_plots + "/DensityScatter_" + tf_id + ".svg"
             plt.savefig(figure_path, format="svg")
-            plt.show()
+            # plt.show()
             
             return self.path_plots
         
@@ -157,7 +157,7 @@ class VisualizeData:
             #plt.savefig(figure_path, format="svg")
             vil_fig_path = os.path.join(self.path_visualization, filename)
             plt.savefig(vil_fig_path, format="svg")
-            plt.show()
+            # plt.show()
             
             return z,filename
             
@@ -196,7 +196,7 @@ class VisualizeData:
             plt.savefig(figure_path, format= "svg")
             #plt.savefig(/visualization/assests/img/, kwargs)
             
-            plt.show()
+            # plt.show()
             
 if __name__ == '__main__':
     path = "/home/python/"

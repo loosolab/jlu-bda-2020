@@ -10,7 +10,6 @@ from scripts.components_fit import GmFit
 from scripts.visualize_data import VisualizeData as VD
 from scripts.ema import EMA
 from scripts.modify_csv import modifyCSV 
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import os
@@ -46,7 +45,7 @@ class TF_analyser:
         path_scripts = os.path.dirname(__file__)
         path_bin = os.path.split(path_scripts)
         path_main = os.path.split(path_bin[0])
-        self.path_results = os.path.join(path_main[0], 'results')
+        self.path_result_csv = os.path.join(path_main[0], 'results', 'result.csv')
             
     # def progress(self, count, total, suffix=''):
     #     """
@@ -160,11 +159,11 @@ class TF_analyser:
                 single_result.insert(10, 'vis_filename', filename)
                 
                 resultframe = pd.concat([resultframe, single_result])
-                print (tf + "    Done")
                 # i += 1
                 # Main().progress(i, total, '')
-                parameters = [self.genome, self.width, mode, self.chr, biosource, tf]
-                modifyCSV(self.path_results + "/result.csv").compare(parameters)
+                parameters = [self.genome, self.width, mode, "".join(self.chr), biosource, tf]
+                modifyCSV(self.path_result_csv).compare(parameters)
+                print (tf + "    Done")
                 
 
         #Save resultframe

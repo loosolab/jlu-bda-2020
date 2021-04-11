@@ -44,6 +44,10 @@ class Repository:
         Method for parsing float_string
         """
         return ast.literal_eval(float_string.replace(',', '.'))
+    
+    # def from_string_array(self,string):
+        
+        
         
     def read_csv(self, filename):
         """
