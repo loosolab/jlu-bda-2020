@@ -8,6 +8,8 @@ import repository
 import pandas as pd
 import os
 import csv
+import time
+import calendar
 
 def get_biosource_list_for_tree():
     """
@@ -22,7 +24,11 @@ def get_biosource_list_for_tree():
     #create dict containing the biosources and tfs
     for index in results.index:
         biosource = results["biosource"][index] +"_"+ results["genome"][index]
-        tf = results["tf"][index] + "_" + results["chr"][index]
+
+        analyzetime = float(results["time"][index])
+        analyzetime_asc = time.asctime(time.localtime(analyzetime))
+        tf = results["tf"][index] + ", width: "+str(results["width"][index]) +", analyzed: "+ analyzetime_asc
+
         if biosource not in data_dict:
             data_dict[biosource]=[]
         if tf not in data_dict[biosource]:
@@ -32,7 +38,7 @@ def get_biosource_list_for_tree():
     for biosource in data_dict:
         tree_node = {"item": biosource, "type":"", "belongsTo":"", "checked": False, "children":[]}
         for tf in data_dict[biosource]:
-            inner_tree_node = {"item": tf, "type":"tf", "belongsTo":biosource, "checked": False, "children":[]}
+            inner_tree_node = {"item": tf, "type":str(analyzetime), "belongsTo":biosource, "checked": False, "children":[]}
             tree_node["children"].append(inner_tree_node)
         data_ls.append(tree_node)
     
@@ -51,12 +57,11 @@ def getChecked(data):
         whats_checked_bio_tf[biosource]=[]
         if biosource_obj["checked"]:
             for tf_obj in biosource_obj["children"]:
-                tf = tf_obj["item"]
-                whats_checked_bio_tf[biosource].append(tf)
+                whats_checked_bio_tf[biosource].append([tf_obj["item"], tf_obj["type"]])
         else:
             for tf_obj in biosource_obj["children"]:
                 if tf_obj["checked"]:
-                    whats_checked_bio_tf[biosource].append(tf_obj["item"])
+                    whats_checked_bio_tf[biosource].append([tf_obj["item"], tf_obj["type"]])
     
     #remove empty biosources
     only_checked={}
@@ -80,10 +85,19 @@ def getRawData(checked_data):
         rawdata_dict[biosource]={}
         
         # extract path, weights and means for each tf from the result.csv
-        for tf in checked_data[biosource]:
-            path_for_tf = results.loc[(results["tf"] == tf.split(sep="_")[0]) & (results["chr"] == tf.split(sep="_")[1]) & (results["biosource"] == biosource.split(sep="_")[0]) & (results["genome"] == biosource.split(sep="_")[1])]["path"].iloc[0]
-            weights = results.loc[(results["tf"] == tf.split(sep="_")[0]) & (results["chr"] == tf.split(sep="_")[1]) & (results["biosource"] == biosource.split(sep="_")[0]) & (results["genome"] == biosource.split(sep="_")[1])]["weights"].tolist()
-            means = results.loc[(results["tf"] == tf.split(sep="_")[0]) & (results["chr"] == tf.split(sep="_")[1]) & (results["biosource"] == biosource.split(sep="_")[0]) & (results["genome"] == biosource.split(sep="_")[1])]["means"].tolist()
+        for tf_obj in checked_data[biosource]:
+            print(tf_obj)
+            tf_stats_old = tf_obj[0].split(",")
+            tf_stats = tf_stats_old[0]+", "+tf_stats_old[2]
+            path_for_tf = results.loc[(results["time"] == float(tf_obj[1]))]["path"].iloc[0]
+            weights = results.loc[(results["time"] == float(tf_obj[1]))]["weights"].tolist()
+            means = results.loc[(results["time"] == float(tf_obj[1]))]["means"].tolist()
+
+            #stats about the analysis
+            tf = results.loc[(results["time"] == float(tf_obj[1]))]["tf"].iloc[0]
+            width = results.loc[(results["time"] == float(tf_obj[1]))]["width"].iloc[0]
+            chrs = results.loc[(results["time"] == float(tf_obj[1]))]["chr"].iloc[0]
+            path_to_svg = results.loc[(results["time"] == float(tf_obj[1]))]["vis_filename"].iloc[0]
             new_weights=[]
             
             # add all weight into a list and round them
@@ -100,7 +114,7 @@ def getRawData(checked_data):
                  
             #secure that path exists
             if os.path.exists(path_for_tf):
-                csvfile = open(os.path.join(path_for_tf,tf.split(sep="_")[0]+".csv")) 
+                csvfile = open(os.path.join(path_for_tf,tf+".csv")) 
                 data = list(csv.reader(csvfile, delimiter=","))
                 csvfile.close()
                 x = []
@@ -108,17 +122,20 @@ def getRawData(checked_data):
                 
                 # add CHIP-seq and ATAC-seq scores as x and y coordinates to lists
                 for row in data:
-                    x.append(round(float(row[0]),3))
-                    y.append(round(float(row[1]),3))
+                    x.append(round(float(row[1]),3))
+                    y.append(round(float(row[0]),3))
                 
                 # add all data for each tf into the dictionary
-                rawdata_dict[biosource][tf]={}
-                rawdata_dict[biosource][tf]["rawData"]=[]
-                rawdata_dict[biosource][tf]["analysisData"]=[]
-                rawdata_dict[biosource][tf]["analysisData"].append(atac_ls)
-                rawdata_dict[biosource][tf]["analysisData"].append(chip_ls)
-                rawdata_dict[biosource][tf]["analysisData"].append(new_weights)
-                rawdata_dict[biosource][tf]["rawData"].append([x, y])
+                rawdata_dict[biosource][tf_stats]={}
+                rawdata_dict[biosource][tf_stats]["rawData"]=[]
+                rawdata_dict[biosource][tf_stats]["analysisData"]=[]
+                rawdata_dict[biosource][tf_stats]["analysisData"].append(atac_ls)
+                rawdata_dict[biosource][tf_stats]["analysisData"].append(chip_ls)
+                rawdata_dict[biosource][tf_stats]["analysisData"].append(new_weights)
+                rawdata_dict[biosource][tf_stats]["rawData"].append([x, y])
+                rawdata_dict[biosource][tf_stats]["stats"]=[]
+                rawdata_dict[biosource][tf_stats]["stats"].append([str(path_to_svg),str(chrs), str(width)])
+                
 
 
     return {"data": rawdata_dict}
