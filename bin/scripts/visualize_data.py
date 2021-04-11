@@ -38,7 +38,7 @@ class VisualizeData:
             path_scripts = os.path.dirname(__file__)
             path_bin = os.path.split(path_scripts)
             path_main = os.path.split(path_bin[0])
-            self.path_visualization = os.path.join(path_main[0], "visualization/assests/img/")
+            self.path_visualization = os.path.join(path_main[0], "visualization","src","assets","img")
             try:
                 os.makedirs(self.path_plots)
             except:
