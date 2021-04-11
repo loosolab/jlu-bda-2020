@@ -13,6 +13,7 @@ from scripts.modify_csv import modifyCSV
 import pandas as pd
 import numpy as np
 import os
+import time
 
 class TF_analyser:
     """
@@ -164,7 +165,8 @@ class TF_analyser:
                 np.savetxt(path + '/' + tf + '.csv', scoresarray, delimiter=',')
                 
                 single_result.insert(9, 'path', path)
-                single_result.insert(10, 'vis_filename', filename)
+                single_result.insert(10, 'time', time.time())
+                single_result.insert(11, 'vis_filename', filename)
                 
                 resultframe = pd.concat([resultframe, single_result])
                 # i += 1

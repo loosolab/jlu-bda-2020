@@ -11,7 +11,7 @@ from scipy.stats import gaussian_kde
 import numpy as np
 from sklearn.mixture import GaussianMixture
 import os
-import time
+import uuid
 
 class VisualizeData:
     
@@ -151,10 +151,10 @@ class VisualizeData:
             ax.plot_trisurf(x, y, z, cmap=plt.cm.coolwarm, linewidth=1, antialiased=False)
             # ax.plot_surface(x, y, z, color='b')
             
-            filename = "Contour_" + tf_id + "_" + str(time.time()) +".svg"
+            filename = "Contour_" + tf_id + "_" + str(uuid.uuid4().hex) +".svg"
             
             figure_path = os.path.join(self.path_plots, "Contour_" + tf_id + ".svg")
-            #plt.savefig(figure_path, format="svg")
+            plt.savefig(figure_path, format="svg")
             vil_fig_path = os.path.join(self.path_visualization, filename)
             plt.savefig(vil_fig_path, format="svg")
             # plt.show()

@@ -60,7 +60,9 @@ class modifyCSV:
             data.pop('covariances')
             data.pop('weights')
             data.pop('path')
+            data.pop('time')
             data.pop('vis_filename')
+            
             
             count = 0
             tochange = []
