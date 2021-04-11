@@ -11,6 +11,7 @@ from scipy.stats import gaussian_kde
 import numpy as np
 from sklearn.mixture import GaussianMixture
 import os
+import time
 
 class VisualizeData:
     
@@ -37,7 +38,7 @@ class VisualizeData:
             path_scripts = os.path.dirname(__file__)
             path_bin = os.path.split(path_scripts)
             path_main = os.path.split(path_bin[0])
-            self.path_visualization = os.path.join(path_main[0], "visualization","src","assets","img", biosource +"_"+ genome, tf_id + "_" + "".join(chromosome))
+            self.path_visualization = os.path.join(path_main[0], "visualization/assests/img/")
             try:
                 os.makedirs(self.path_plots)
             except:
@@ -107,7 +108,7 @@ class VisualizeData:
             fig, ax = plt.subplots()
             ax.scatter(x, y, c=z, s=50, edgecolors='face')
             
-            ax.set(xlim=(0,1), ylim=(0,1))
+            ax.set(xlim=(0,100), ylim=(0,100))
             plt.xlabel("ATAC")
             plt.ylabel("Chip")
             # plt.colorbar()
@@ -149,13 +150,16 @@ class VisualizeData:
             ax.set_xlabel('ATAC')
             ax.plot_trisurf(x, y, z, cmap=plt.cm.coolwarm, linewidth=1, antialiased=False)
             # ax.plot_surface(x, y, z, color='b')
+            
+            filename = "Contour_" + tf_id + "_" + str(time.time()) +".svg"
+            
             figure_path = os.path.join(self.path_plots, "Contour_" + tf_id + ".svg")
-            plt.savefig(figure_path, format="svg")
-            vil_fig_path = os.path.join(self.path_visualization, "Contour_" + tf_id + "_" + "".join(self.chromosome) +".svg")
+            #plt.savefig(figure_path, format="svg")
+            vil_fig_path = os.path.join(self.path_visualization, filename)
             plt.savefig(vil_fig_path, format="svg")
             plt.show()
             
-            return z
+            return z,filename
             
         #Make altitude Plot
         def altitudePlot(self, data, n_cgauss, tf_id):

@@ -9,7 +9,7 @@ from scripts.repository import Repository
 from scripts.components_fit import GmFit
 from scripts.visualize_data import VisualizeData as VD
 from scripts.ema import EMA
-from scripts.modify_csv import modifyCSV 
+from scripts.modifyCSV import modify_csv 
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -136,7 +136,7 @@ class TF_analyser:
                 single_result = EMA().emAnalyse(distribution, self.n_components)
                
                 single_result.insert(0,'tf',tf)
-                single_result.insert(0,'chr', "".join(self.chr))
+                single_result.insert(0,'chr',self.chr)
                 single_result.insert(0,'biosource',biosource)
                 single_result.insert(0, 'mode', mode)
                 single_result.insert(0,'width', self.width)
@@ -147,7 +147,7 @@ class TF_analyser:
                 path = v.displayDensityScatter(distribution, tf)
                 
                 v.altitudePlot(distribution, self.n_components, tf)
-                z,filename = v.contourPlot(distribution, self.n_components, tf)
+                z = v.contourPlot(distribution, self.n_components, tf)
             
                 #Add z axis to scoresarray:
                 for i in range(0,len(z)):
@@ -157,7 +157,6 @@ class TF_analyser:
                 np.savetxt(path + '/' + tf + '.csv', scoresarray, delimiter=',')
                 
                 single_result.insert(9, 'path', path)
-                single_result.insert(10, 'vis_filename', filename)
                 
                 resultframe = pd.concat([resultframe, single_result])
                 print (tf + "    Done")
