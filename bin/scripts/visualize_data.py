@@ -74,8 +74,8 @@ class VisualizeData:
                 xi = v[0]
                 yi = v[1]
                 
-                x.append(xi)
-                y.append(yi)
+                x.append(xi*100)
+                y.append(yi*100)
             
             np.array(x)
             np.array(y)
@@ -107,7 +107,7 @@ class VisualizeData:
             fig, ax = plt.subplots()
             ax.scatter(x, y, c=z, s=50, edgecolors='face')
             
-            ax.set(xlim=(0,1), ylim=(0,1))
+            ax.set(xlim=(0,100), ylim=(0,100))
             plt.xlabel("ATAC")
             plt.ylabel("Chip")
             # plt.colorbar()
