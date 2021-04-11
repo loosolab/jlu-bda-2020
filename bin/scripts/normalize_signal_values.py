@@ -8,11 +8,6 @@ log-scaled
 - min-max-scale all files (to a range of 0-1) with global min and max values
 derived from the log-scaled values of all files in current analysis run
 
-To-do:
-- Bin size problem:
-    - Narrow and broad peaks -> narrow peaks only has summit? One value for
-      multiple pos? Problem that needs solving
-
 
 Use as follows:
 
