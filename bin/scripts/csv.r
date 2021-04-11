@@ -243,22 +243,35 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   atac_biosources <- unique(vapply(atac_metadata,function(x) { tolower(x$sample_info$biosource_name) },character(1L)))
   
   # 2nd Step: Collect ChiP experiments and fetch metadata
+  # Normally, it would suffice to call deepblue_list_experiments() once with all
+  # biosources, but it may return experiments with misspelled biosources (e.g.
+  # "t-47d" when "t47d" was requested), so the function is called once for each
+  # biosource and the ChIP biosources are later overwritten by their ATAC
+  # equivalents.
   
-  chip_experiments <- suppressMessages(deepblue_list_experiments(genome=genome, technique="ChIP-Seq", biosource=atac_biosources, type=chip_type, epigenetic_mark=chip_marks))
+  chip_experiments <- rbindlist(
+    lapply(atac_biosources,function(bsource) {
+      experiments <- suppressMessages(deepblue_list_experiments(genome=genome, technique="ChIP-Seq", biosource=bsource, type=chip_type, epigenetic_mark=chip_marks))
+      if(is.list(experiments)) {
+        return(expand.grid(id=experiments$id, bsource=bsource))
+      }
+    })
+  )
 
-  if(!is.list(chip_experiments)) { 
+  if(nrow(chip_experiments) == 0) { 
   
     stop(paste(genome,"No ChIP-seq data available for given arguments",sep=": "))
     
   } else {
     
-    chip_experiments <- chip_experiments$id
-    message(paste("fetching",length(chip_experiments),"ChIP-seq experiments ..."))
+    message(paste("fetching",nrow(chip_experiments),"ChIP-seq experiments ..."))
     
-    chip_metadata <- lapply(chip_experiments,function(c) {
-      metadata <- suppressMessages(deepblue_info(c))
-      return(metadata[!names(metadata) %in% c("extra_metadata","upload_info","columns")])
-    })
+    chip_metadata <- suppressWarnings(apply(chip_experiments,1,function(c) {
+      metadata <- suppressMessages(deepblue_info(c[1]))
+      metadata <- metadata[!names(metadata) %in% c("extra_metadata","upload_info","columns")]
+      metadata$sample_info$biosource_name <- as.vector(c[2])
+      return(metadata)
+    }))
     
     chip_biosources <- unique(tolower(vapply(chip_metadata,function(x){ x$sample_info$biosource_name },character(1L))))
 
@@ -268,6 +281,10 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
     
     atac_metadata <- atac_metadata[lapply(atac_metadata,function(x){ tolower(x$sample_info$biosource_name) }) %in% chip_biosources]
     message(paste("kept",length(atac_metadata),"ATAC/DNAse-seq experiments"))
+    
+    if(length(atac_metadata) == 0) {
+      stop(paste(genome,"No ATAC/ChIP-seq experiments could be linked"))
+    }
     
     all_metadata <- c(chip_metadata,atac_metadata)
     
