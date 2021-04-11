@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-//import {FlaskApiService} from '../service/flask-api.service'
 
 @Component({
   selector: 'app-home',
@@ -13,7 +12,6 @@ export class HomeComponent implements OnInit {
   
   constructor(
     private router: Router,
-    //private api_service: FlaskApiService
     ) { }
 
   
@@ -22,19 +20,7 @@ export class HomeComponent implements OnInit {
   }
   
   toResults(){
-    /*this.api_service.getTreeData().then(dataobject =>{
-      let navigationExtras: NavigationExtras = {
-      state: {
-        filelist: dataobject
-      }
-    }
-    console.log(navigationExtras)
-    console.log(this.graphlist)
-    
-    this.router.navigate(["/graph_home"], navigationExtras)
-    })*/
     this.router.navigate(["/graph_home"])
-    
   }
   
    
