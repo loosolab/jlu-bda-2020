@@ -147,7 +147,7 @@ class TF_analyser:
                 path = v.displayDensityScatter(distribution, tf)
                 
                 v.altitudePlot(distribution, self.n_components, tf)
-                z = v.contourPlot(distribution, self.n_components, tf)
+                z,filename = v.contourPlot(distribution, self.n_components, tf)
             
                 #Add z axis to scoresarray:
                 for i in range(0,len(z)):
@@ -157,6 +157,7 @@ class TF_analyser:
                 np.savetxt(path + '/' + tf + '.csv', scoresarray, delimiter=',')
                 
                 single_result.insert(9, 'path', path)
+                single_result.insert(10, 'vis_filename', filename)
                 
                 resultframe = pd.concat([resultframe, single_result])
                 print (tf + "    Done")
