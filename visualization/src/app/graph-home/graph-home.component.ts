@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { HomeComponent } from '../home/home.component';
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeFlattener, MatTreeFlatDataSource, MatTreeNestedDataSource } from '@angular/material/tree';
 import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
@@ -99,8 +98,5 @@ export class GraphHomeComponent implements OnInit {
     return node.children.filter(tf => tf.checked).length > 0 && !node.checked
   }
 
-  goBack(){
-    //This Function navigates back to the start page
-    this.router.navigate(["/home"])
-  }
+
 }

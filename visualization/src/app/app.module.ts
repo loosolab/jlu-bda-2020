@@ -8,7 +8,6 @@ import { PlotlyModule } from "angular-plotly.js"
 PlotlyModule.plotlyjs = plotlyjs
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { HomeComponent } from './home/home.component';
 import { GraphHomeComponent } from './graph-home/graph-home.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {MatCardModule} from '@angular/material/card';
@@ -25,7 +24,6 @@ import { FlexLayoutModule } from "@angular/flex-layout";
 @NgModule({
   declarations: [
     AppComponent,
-    HomeComponent,
     GraphHomeComponent,
     GraphTfComponent,
   ],
