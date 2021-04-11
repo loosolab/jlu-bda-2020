@@ -232,8 +232,7 @@ def main():
 
             # run the script score.py and store the calculated scores in the dictionary 'scores'
             scores = scripts.score.findarea(args.width, args.genome.lower(), [x.lower() for x in args.biosource],
-                                            [x.lower() for x in args.tf], args.chromosome, args.output_path,
-                                            args.component_size)
+                                            [x.lower() for x in args.tf], args.chromosome, args.output_path)
 
             # test if 'scores' is an empty dictionary
             # if not, generate plots with the script analyse_main.py
