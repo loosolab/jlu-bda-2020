@@ -12,98 +12,36 @@ export class GraphTfComponent implements OnInit {
   graph_list_names_tf: any
   graph_list_names_bio: any
   title = 'dynamic-plots';
-  // Bar Chart
-  /*graph_density = {
-    data: [
-      { 
-        x: [1,2,3,4,1,9,9,2,5,7,8,1,9,9,9,9,9,9,9,9],
-        y: [2,3,4,4,8,6,8,2,0,4,7,9,9,9,9,9,9,9,9,9],        
-        type: 'scatter', 
-        mode:"markers", 
-        name:"points",
-        marker: {
-          color: "rgb(150,0,0)",
-          size: 5,
-          opacity: 0.5
-        },  
-      },
-      {
-        x: [1,2,3,4,1,9,9,2,5,7,8,1,9,9,9,9,9,9,9,9],
-        y: [2,3,4,4,8,6,8,2,0,4,7,9,9,9,9,9,9,9,9,9],
-        name: 'density',
-        ncontours: 20,
-        colorscale: 'Hot',
-        reversescale: true,
-        showscale: false,
-        type: 'histogram2dcontour'
-      }
-    ],
-    layout: {title: 'Some Data to Hover Over'}
-  };
-  // Line chart
-  /*graph2 = {
-    data: [
-      { x: [1, 2, 3, 4, 5], y: [1, 4, 9, 4, 1], type: 'scatter' },
-      { x: [1, 2, 3, 4, 5], y: [1, 3, 6, 9, 6], type: 'scatter' },
-      { x: [1, 2, 3, 4, 5], y: [1, 2, 4, 5, 6], type: 'scatter' },
-    ],
-    layout: {title: 'Some Data to Highlight'}
-  };*/
-  /*density_scatter = {
-    data: [
-    { 
-        x: [],
-        y: [],        
-        type: 'scatter', 
-        mode:"markers", 
-        name:"points",
-        marker: {
-          color: "rgb(150,0,0)",
-          size: 5,
-          opacity: 0.5
-        },  
-      },
-      {
-        x: [],
-        y: [],
-        name: 'density',
-        ncontours: 20,
-        colorscale: 'Hot',
-        reversescale: true,
-        showscale: false,
-        type: 'histogram2dcontour'
-      }
-    ],
-    layout: {title: 'Some Data to Hover Over'}
-  };*/
+
   constructor(
     private router: Router,
     private api_service: FlaskApiService
   ) {
-    //let temp_list = []
-    //temp_list.push(this.graph_density)
-    //temp_list.push(this.graph2)
-    //this.graph_list=temp_list
+
     console.log("starting to create graphs")
     this.createGraphs()
   }
 
   createGraphs() {
+    //This function creates objects for graphs and tables and sorts them into arrays. The biosources and tfs are although sorted.
     var rawData: any
     rawData = this.api_service.RawGraphData.value
     let temp_bio = []
     let temp_bio_names = []
 
     let temp_tf = []
+    let temp_tf_names_outer = []
     let temp_tf_names = []
+
     for (var biosource in rawData) {
       console.log(biosource)
       temp_tf = []
+
       for (var tf in rawData[biosource]) {
         console.log(tf)
-        // create 3 dataobjects because of 3 plots per tf
+        
         let temp_graph = []
-        //densityscatter
+        //create densityscatter plot object
         var temp_density_scatter = {
           data: [
             {
@@ -176,51 +114,9 @@ export class GraphTfComponent implements OnInit {
             }
           }
         };
-        /*var temp_3dsurface = {
-          data: [
-            {
-              x: rawData[biosource][tf][0][0],
-              y: rawData[biosource][tf][0][1],
-              z: rawData[biosource][tf][0][2],
-              type: "surface"
-            }
-          ],
-          layout: {
-            title: 'Surface Plot',
-          autosize: false,
-          width: 500,
-          height: 500,
-          margin: {
-            l: 65,
-            r: 50,
-            b: 65,
-            t: 90,
-          }}
-        };
-      var temp_contourPlot = {
-        data: [
-          {
-            x: rawData[biosource][tf][0][0],
-            y: rawData[biosource][tf][0][1],
-            //z: rawData[biosource][tf][0][2],
-            ncontours: 20,
-            colorscale: 'Jet',
-            reversescale: true,
-            showscale: false,
-            type: 'contour'
-          }
-        ],
-        layout: {title: 'Contour Plot',
-        xaxis: {
-          range: [0,100]
-        },
-        yaxsis: {
-          range: [0,100]
-        }}
-      };*/
+        
         console.log(temp_density_scatter)
-        //console.log(temp_3dsurface)
-        //console.log(temp_contourPlot)
+        //create table for weights
         var table = {
           data: [
             {
@@ -243,24 +139,22 @@ export class GraphTfComponent implements OnInit {
             }]
 
         }
-        console.log(table)
-        //temp_graph.push(temp_density_scatter)
-        //temp_graph.push(temp_contourPlot)
-        //temp_graph.push(temp_3dsurface)
+        //save densityscatter and table in list for each tf
         temp_graph.push(temp_density_scatter)
         temp_graph.push(table)
-        //temp_graph.push(temp_contourPlot)
-        //temp_graph.push(temp_3dsurface)
+        //push chrs and metadata as table?
         temp_tf.push(temp_graph)
         temp_tf_names.push(tf)
-
       }
+      
       temp_bio.push(temp_tf)
+      temp_tf_names_outer.push(temp_tf_names)
+      temp_tf_names = []
       temp_bio_names.push(biosource)
     }
-
+    //set global variables on the value of local variables
     this.graph_list = temp_bio
-    this.graph_list_names_tf = temp_tf_names
+    this.graph_list_names_tf = temp_tf_names_outer
     this.graph_list_names_bio = temp_bio_names
     console.log(this.graph_list)
 
@@ -270,8 +164,6 @@ export class GraphTfComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
-
   }
 
   goBack(){

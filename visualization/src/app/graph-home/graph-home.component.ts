@@ -24,7 +24,7 @@ const Tree_data = {
   styleUrls: ['./graph-home.component.scss'],
 })
 export class GraphHomeComponent implements OnInit {
-
+  //create TreeControl classes
   nestedTreeControl: NestedTreeControl<TFItemNode>
   nestedDataSource: MatTreeNestedDataSource<TFItemNode>
   dataChange: BehaviorSubject<TFItemNode[]> = new BehaviorSubject<TFItemNode[]>([])
@@ -39,45 +39,13 @@ export class GraphHomeComponent implements OnInit {
   ) {
     this.api_service.setTreeData().then(() => {
       console.log("from service", this.api_service.Tree_Data.value)
-
-
       console.log(this.api_service.Tree_Data.value)
-      //this.filelist = this.router.getCurrentNavigation()?.extras.state
-      //this.graphData= this.filelist.filelist["data"]
-
-
+      //initialize TreeControl classes
       this.nestedTreeControl = new NestedTreeControl<TFItemNode>(this._getChildren)
       this.nestedDataSource = new MatTreeNestedDataSource()
-
+      //get TreeData from Api
       this.api_service.Tree_Data.subscribe(data => this.nestedDataSource.data = data)
-      //this.dataChange.next(this.api_service.Tree_Data.value)
-
-      //Data from API --> Datastructure: 
-      /*[
-        {
-          item: "Biosource1", 
-          type:"",
-          belongsTo: "",
-          checked: false,
-          children: [
-            {item: "TF1",type:"tf",belongsTo: "Biosource1",checked: false, children: []},
-            {item: "TF2",type:"tf",belongsTo: "Biosource1",checked: false, children: []}
-          ]
-        },
-        {
-          item: "Biosource2", 
-          type:"",
-          belongsTo: "",
-          checked: false,
-          children: [
-            {item: "TF1",type:"tf",belongsTo: "Biosource2",checked: false, children: []},
-            {item: "TF2",type:"tf",belongsTo: "Biosource2",checked: false, children: []}
-          ]
-        }
-      ]*/
-
-
-
+      
     })
   }
 
@@ -92,14 +60,7 @@ export class GraphHomeComponent implements OnInit {
 
 
   goToResults() {
-    //console.log(this.nestedDataSource.data)
-    //console.log(this.api_service.Tree_Data.value)
-    //this.api_service.Tree_Data.next(this.nestedDataSource.data)
-    /* for old show png only
-    this.api_service.setTreeData().then(() =>{
-      console.log(this.api_service.Viszalization_Data.value)
-      this.router.navigate(["/graph_biosource"])
-    })*/
+    //This Function sends an API Call and navigates to the next page when it got an return.
     this.api_service.setRawData().then(() =>{
       console.log("on graph home recieved data",this.api_service.RawGraphData.value)
       this.router.navigate(["/graph_tf"])
@@ -108,6 +69,7 @@ export class GraphHomeComponent implements OnInit {
   }
 
   updateAllChecked(node: TFItemNode) {
+    //This Function checks if all tfs that belong to a biosource are checked
     console.log(node)
     this.nestedDataSource.data.forEach(element => {
       if (element.item == node.belongsTo) {
@@ -117,7 +79,7 @@ export class GraphHomeComponent implements OnInit {
   }
 
   checkAll(node: TFItemNode) {
-
+    //This Function selects all tfs that belong to that biosource
     console.log(node)
     if (node.checked) {
       node.children.forEach(element => {
@@ -133,10 +95,12 @@ export class GraphHomeComponent implements OnInit {
   }
 
   someChecked(node: TFItemNode): boolean {
+    //This Function checks if only some tfs that belong to a biosource are checked
     return node.children.filter(tf => tf.checked).length > 0 && !node.checked
   }
 
   goBack(){
+    //This Function navigates back to the start page
     this.router.navigate(["/home"])
   }
 }
