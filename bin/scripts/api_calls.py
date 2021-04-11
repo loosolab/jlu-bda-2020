@@ -122,8 +122,8 @@ def getRawData(checked_data):
                 
                 # add CHIP-seq and ATAC-seq scores as x and y coordinates to lists
                 for row in data:
-                    x.append(round(float(row[1]),3))
-                    y.append(round(float(row[0]),3))
+                    x.append(round(float(row[0]),3))
+                    y.append(round(float(row[1]),3))
                 
                 # add all data for each tf into the dictionary
                 rawdata_dict[biosource][tf_stats]={}

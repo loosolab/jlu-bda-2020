@@ -56,7 +56,7 @@ export class GraphTfComponent implements OnInit {
               name: "points",
               marker: {
                 color: "rgb(246,19,238)",
-                size: 1.5,
+                size: 2,
                 opacity: 0.3
               },
             },
