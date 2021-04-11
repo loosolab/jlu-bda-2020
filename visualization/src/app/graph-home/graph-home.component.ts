@@ -98,9 +98,8 @@ export class GraphHomeComponent implements OnInit {
 
   someChecked(node: TFItemNode): boolean {
     //This Function checks if only some tfs that belong to a biosource are checked
-    
+
     return node.children.filter(tf => tf.checked).length > 0 && !node.checked
   }
-
 
 }
