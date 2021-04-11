@@ -11,6 +11,7 @@ export class GraphTfComponent implements OnInit {
   graph_list: any
   graph_list_names_tf: any
   graph_list_names_bio: any
+  graph_list_stats: any
   title = 'dynamic-plots';
 
   constructor(
@@ -32,6 +33,9 @@ export class GraphTfComponent implements OnInit {
     let temp_tf = []
     let temp_tf_names_outer = []
     let temp_tf_names = []
+
+    let temp_stats_1 = []
+    let temp_stats_2 = []
 
     for (var biosource in rawData) {
       console.log(biosource)
@@ -143,12 +147,14 @@ export class GraphTfComponent implements OnInit {
         temp_graph.push(temp_density_scatter)
         temp_graph.push(table)
         //push chrs and metadata as table?
+        temp_graph.push(rawData[biosource][tf]["stats"])
         temp_tf.push(temp_graph)
         temp_tf_names.push(tf)
       }
       
       temp_bio.push(temp_tf)
       temp_tf_names_outer.push(temp_tf_names)
+      //temp_stats_2.push(temp_stats_1)
       temp_tf_names = []
       temp_bio_names.push(biosource)
     }

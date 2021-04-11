@@ -18,8 +18,9 @@
                         {{tf}}
                     </mat-card-title>
                 </mat-card-header>
-                For this tf there where used these x chrs for analysis.
-
+                For the analysis of {{tf}} the chromosoms: {{graph_list[i_bio][a][2][0][1]}} were used.
+                <br>
+                The width around the summit was {{graph_list[i_bio][a][2][0][2]}}.
                 <div fxLayout="row wrap">
                 <mat-card  class="tripple-card">
                     <mat-card-header>
@@ -27,7 +28,7 @@
                             3D Contour Plot
                         </mat-card-title>
                     </mat-card-header>
-                    <img class="img-border" src="assets/img/{{biosource}}/{{tf}}/Contour_{{tf}}.svg" width="550" title="3D Contout Plot">
+                    <img class="img-border" src="assets/img/{{graph_list[i_bio][a][2][0][0]}}" width="550" title="3D Contout Plot">
                      <br>
                     This 3D Contour Plot contains the means of the ATAC Scores on the x-axis, the CHIP Scores on the y-axis and the density of these values on the z-axis.
                 </mat-card>
