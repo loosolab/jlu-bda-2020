@@ -46,6 +46,14 @@ class TF_analyser:
         path_bin = os.path.split(path_scripts)
         path_main = os.path.split(path_bin[0])
         self.path_result_csv = os.path.join(path_main[0], 'results', 'result.csv')
+        
+        if path:
+            
+            self.path_results = os.path.join(path, 'results')
+        else:
+            
+            self.path_results = os.path.join(path_main[0], 'results')
+        
             
     # def progress(self, count, total, suffix=''):
     #     """
@@ -135,7 +143,7 @@ class TF_analyser:
                 single_result = EMA().emAnalyse(distribution, self.n_components)
                
                 single_result.insert(0,'tf',tf)
-                single_result.insert(0,'chr', "".join(self.chr))
+                single_result.insert(0,'chr', ", ".join(self.chr))
                 single_result.insert(0,'biosource',biosource)
                 single_result.insert(0, 'mode', mode)
                 single_result.insert(0,'width', self.width)
@@ -161,7 +169,7 @@ class TF_analyser:
                 resultframe = pd.concat([resultframe, single_result])
                 # i += 1
                 # Main().progress(i, total, '')
-                parameters = [self.genome, self.width, mode, "".join(self.chr), biosource, tf]
+                parameters = [self.genome, self.width, mode, ", ".join(self.chr), biosource, tf]
                 modifyCSV(self.path_result_csv).compare(parameters)
                 print (tf + "    Done")
                 
