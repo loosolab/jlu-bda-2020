@@ -1,7 +1,15 @@
-<mat-card class="inner-card">
-x biosources and x tfs were found as results to display
-You can select a complete biosource by simply clicking at the checkbox.
-If you only want to display the results for a few tfs you can just tick these.
+<mat-card class="inner-card" >
+    <mat-card-header >
+        <mat-card-title style="text-align: center;">
+        <b>Analysis finished!</b>
+        <br>
+        Results for {{biosource_count}} biosources and {{tf_count}} transcription farctor(s) found.
+        <hr>
+    </mat-card-title>
+    
+    </mat-card-header>
+You can select a whole biosource with all its transcription factors by simply clicking at its checkbox.
+If you only want to display the results for a few transcription factors you can just tick these.
 
 <mat-tree [dataSource]="nestedDataSource" [treeControl]="nestedTreeControl" class="example-tree">
     <mat-tree-node *matTreeNodeDef = "let node">
@@ -39,5 +47,5 @@ If you only want to display the results for a few tfs you can just tick these.
 </mat-tree>
 
 
-<button mat-raised-button class="card-button" color="primary" (click)="goToResults()">See Results for selected Sources</button>
+<button mat-raised-button class="card-button" (click)="goToResults()">See Results for selected Sources</button>
 </mat-card>

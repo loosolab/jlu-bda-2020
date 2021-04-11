@@ -8,14 +8,6 @@ import { FlaskApiService, TFItemNode } from '../service/flask-api.service';
 
 
 
-const Tree_data = {
-  Biosource: {
-    "one": ["tf1", "tf2"],
-    "two": ["tf1", "tf2"]
-  }
-}
-
-
 
 @Component({
   selector: 'app-graph-home',
@@ -31,6 +23,9 @@ export class GraphHomeComponent implements OnInit {
   filelist: any
   graphData: any
 
+  biosource_count=0
+  tf_count=0
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -45,6 +40,11 @@ export class GraphHomeComponent implements OnInit {
       //get TreeData from Api
       this.api_service.Tree_Data.subscribe(data => this.nestedDataSource.data = data)
       
+      this.biosource_count= this.api_service.Tree_Data.value.length
+      for (var element in this.api_service.Tree_Data.value){
+        this.tf_count += element.length
+
+      }
     })
   }
 
@@ -60,6 +60,7 @@ export class GraphHomeComponent implements OnInit {
 
   goToResults() {
     //This Function sends an API Call and navigates to the next page when it got an return.
+
     this.api_service.setRawData().then(() =>{
       console.log("on graph home recieved data",this.api_service.RawGraphData.value)
       this.router.navigate(["/graph_tf"])
@@ -69,6 +70,7 @@ export class GraphHomeComponent implements OnInit {
 
   updateAllChecked(node: TFItemNode) {
     //This Function checks if all tfs that belong to a biosource are checked
+
     console.log(node)
     this.nestedDataSource.data.forEach(element => {
       if (element.item == node.belongsTo) {
@@ -79,6 +81,7 @@ export class GraphHomeComponent implements OnInit {
 
   checkAll(node: TFItemNode) {
     //This Function selects all tfs that belong to that biosource
+
     console.log(node)
     if (node.checked) {
       node.children.forEach(element => {
@@ -95,6 +98,7 @@ export class GraphHomeComponent implements OnInit {
 
   someChecked(node: TFItemNode): boolean {
     //This Function checks if only some tfs that belong to a biosource are checked
+    
     return node.children.filter(tf => tf.checked).length > 0 && !node.checked
   }
 

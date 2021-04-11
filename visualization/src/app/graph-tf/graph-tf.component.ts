@@ -29,13 +29,10 @@ export class GraphTfComponent implements OnInit {
     rawData = this.api_service.RawGraphData.value
     let temp_bio = []
     let temp_bio_names = []
-
     let temp_tf = []
     let temp_tf_names_outer = []
     let temp_tf_names = []
 
-    let temp_stats_1 = []
-    let temp_stats_2 = []
 
     for (var biosource in rawData) {
       console.log(biosource)
@@ -146,7 +143,6 @@ export class GraphTfComponent implements OnInit {
         //save densityscatter and table in list for each tf
         temp_graph.push(temp_density_scatter)
         temp_graph.push(table)
-        //push chrs and metadata as table?
         temp_graph.push(rawData[biosource][tf]["stats"])
         temp_tf.push(temp_graph)
         temp_tf_names.push(tf)
@@ -154,7 +150,6 @@ export class GraphTfComponent implements OnInit {
       
       temp_bio.push(temp_tf)
       temp_tf_names_outer.push(temp_tf_names)
-      //temp_stats_2.push(temp_stats_1)
       temp_tf_names = []
       temp_bio_names.push(biosource)
     }
