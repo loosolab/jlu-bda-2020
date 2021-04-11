@@ -68,8 +68,8 @@ def normalize_all(linkage_table_path):
             if os.path.exists(file_paths[i] + '.ln'):
                 log_file_path = file_paths[i] + '.ln'
             else:
-                print("- Log-scaling file {0} of {1}: {2}".format(i + 1,
-                      len(file_paths), file_paths[i]))
+                print("- Log-scaling file {0} of {1}".format(i + 1,
+                      len(file_paths)))
                 try:
                     log_file_path = log_scale_file(file_paths[i],
                                                    column_names[i])
@@ -116,8 +116,8 @@ def normalize_all(linkage_table_path):
     print("------ Finding global min/max values ------")
     for idx, log_path in enumerate(log_file_paths):
         if log_path is not None:
-            print("- Checking file {0} of {1}: {2}".format(idx + 1,
-                  len(log_file_paths), log_path))
+            print("- Checking file {0} of {1}".format(idx + 1,
+                  len(log_file_paths)))
             try:
                 min_value, max_value = get_min_max(log_path, min_val=min_value,
                                                    max_val=max_value)
@@ -134,8 +134,8 @@ def normalize_all(linkage_table_path):
     cnt = 1
     for j in range(0, len(file_paths)):
         if j not in excluded_files:
-            print("- Scaling file {0} of {1}: {2}".format(cnt,
-                  len(file_paths) - len(excluded_files), file_paths[j]))
+            print("- Scaling file {0} of {1}.".format(cnt,
+                  len(file_paths) - len(excluded_files)))
             cnt += 1
             try:
                 min_max_scale_file(file_paths[j], log_file_paths[j],
