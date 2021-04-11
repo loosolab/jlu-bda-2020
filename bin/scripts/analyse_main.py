@@ -121,7 +121,7 @@ class TF_analyser:
                 
                     for array in chromosome:
     
-                            scoresarray.append([array[-2], array[-1]])
+                            scoresarray.append([array[-1], array[-2]])
             
                 
                 # Main().progress(i, total, '')
