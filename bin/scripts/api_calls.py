@@ -30,15 +30,16 @@ def get_biosource_list_for_tree():
         tf = results["tf"][index] + ", width: "+str(results["width"][index]) +", analyzed: "+ analyzetime_asc
 
         if biosource not in data_dict:
-            data_dict[biosource]=[]
+            data_dict[biosource]={}
         if tf not in data_dict[biosource]:
-            data_dict[biosource].append([tf, analyzetime])
+            data_dict[biosource][tf]=analyzetime
+            #data_dict[biosource].append([tf, analyzetime])
     
     #create tree object with the data of the dict
     for biosource in data_dict:
         tree_node = {"item": biosource, "type":"", "belongsTo":"", "checked": False, "children":[]}
         for tf in data_dict[biosource]:
-            inner_tree_node = {"item": tf[0], "type":str(tf[1]), "belongsTo":biosource, "checked": False, "children":[]}
+            inner_tree_node = {"item": tf, "type":str(data_dict[biosource][tf]), "belongsTo":biosource, "checked": False, "children":[]}
             tree_node["children"].append(inner_tree_node)
         data_ls.append(tree_node)
     
