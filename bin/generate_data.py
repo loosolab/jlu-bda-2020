@@ -84,7 +84,8 @@ class DataConfig:
         downloaded.
         """
         logging.info("starting csv creation")
-        tool = os.path.join(self.binpath, "scripts", "csv.r")
+        tool = os.path.join(self.binpath, "scripts",
+                            "generate_linking_table.r")
         path = os.path.join(self.outpath, "data", "download")
         args = [tool, "-d", path, "-o", self.csvname, "-g"]
         args.extend(self.genome)
@@ -111,15 +112,25 @@ class DataConfig:
 
         """
         logging.info("starting data download")
-        tool = os.path.join(self.binpath, "scripts", "export_from_csv.r")
+        tool = os.path.join(self.binpath, "scripts",
+                            "download_deepblue_data.r")
         csv = os.path.join(self.outpath, "data", "download", self.csvname)
         outdir = os.path.join(self.outpath, "data", "download")
+        args = [tool, "-i", csv, "-o", outdir]
+        args.append("-g")
+        args.extend(self.genome)
+        args.append("-b")
+        args.extend(self.biosource)
+        args.append("-c")
+        args.extend(self.chromosome)
+        args.append("-m")
+        args.extend(self.epigenetic_mark)
+        # check if localfiles are used
         if self.localfiles is not None:
-            rc = subprocess.call(
-                [tool, "-i", csv, "-o", outdir, "-l", self.localfiles])
-        else:
-            rc = subprocess.call(
-                [tool, "-i", csv, "-o", outdir])
+            args.append("-l")
+            args.extend(self.localfiles)
+
+        rc = subprocess.call(args)
         if rc == 2:
             logging.info("new new data was downloaded")
             logging.info("finished data download")
@@ -164,7 +175,6 @@ class DataConfig:
         for genome in self.genome:
             chromsizes.append(os.path.join(self.outpath, "data",
                                            "chromsizes", genome + ".chrom.sizes"))
-        # TODO: self.chromsizes replace with array that contains paths to direct files
         merge_all(csvpath, chromsizes, ["bigwig"],
                   bedgraphtobigwig, bigwigMerge)
         logging.info("finished forward reverse merging")
@@ -222,6 +232,17 @@ class DataConfig:
         logging.info("starting Normalization")
         normalize_all(norm_csv)
         logging.info("finished Normalization")
+        old_norm = os.path.join(data, "temp", "normalization.csv.old")
+
+        # Keep backup of the last normalization file for debugging purposes
+        # os.rename does not overwrite on Windows meaning a check is needed.
+        try:
+            os.rename(norm_csv, old_norm)
+        except OSError:
+            os.remove(old_norm)
+            os.rename(norm_csv, old_norm)
+        logging.info(
+            "cleaned up normalization, the run can be found at %d", old_norm)
 
     def generate_dictionaries(self):
         """Generate pickle files for the downloaded data """
