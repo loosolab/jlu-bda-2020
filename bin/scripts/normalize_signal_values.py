@@ -36,7 +36,8 @@ def normalize_all(linkage_table_path):
     :param linkage_table_path: String with path to linkage table .csv
            file containing the files that are part of the current analysis run.
     """
-    print("------ Reading in linkage table ------")
+    print("------ Normalize signal values ------")
+    print("- Reading in normalization.csv")
 
     if os.path.exists(linkage_table_path):
         linkage_table = pd.read_csv(linkage_table_path, sep=';',
@@ -48,19 +49,20 @@ def normalize_all(linkage_table_path):
 
     file_paths = list(linkage_table["file_path"])
     column_names = list(linkage_table["format"])
+    column_names = [el.split(",") for el in column_names]
     log_file_paths = []
     excluded_files = []
     min_value = 0
     max_value = -math.inf
 
     # Give update message for module
-    print("------ Now starting normalisation process. " + str(len(file_paths)) +
-          " files will be normalised ------")
+    print("- Starting normalisation process with {} files. ".format(str(len(
+        file_paths))))
 
     # Check all files to see if they have been log-scaled before or not.
     # If they have, then add path of existing .ln file to log_file_paths,
     # else log-scale and then add new path
-    print("------ Log scaling files ------")
+    print("- Log scaling files")
     for i in range(0, len(file_paths)):
         log_file_path = None
 
@@ -68,7 +70,7 @@ def normalize_all(linkage_table_path):
             if os.path.exists(file_paths[i] + '.ln'):
                 log_file_path = file_paths[i] + '.ln'
             else:
-                print("- Log-scaling file {0} of {1}".format(i + 1,
+                print("Log-scaling file {0} of {1}".format(i + 1,
                       len(file_paths)))
                 try:
                     log_file_path = log_scale_file(file_paths[i],
@@ -81,7 +83,7 @@ def normalize_all(linkage_table_path):
                         'excluded from the normalisation '
                         'process.'.format(file_paths[i]))
                     excluded_files.append(i)
-                    print("- File {} could not be normalized. Please check "
+                    print("File {} could not be normalized. Please check "
                           "logging for further info.".format(file_paths[i]))
                     log_file_path = None
                 except (RuntimeError, UnicodeDecodeError) as err:
@@ -90,7 +92,7 @@ def normalize_all(linkage_table_path):
                         'log_scale_file: \"{}\"'.format(err) + ' for '
                         'the following file: \"{}\"'.format(file_paths[i]))
                     excluded_files.append(i)
-                    print("- File {} could not be normalized. Please check "
+                    print("File {} could not be normalized. Please check "
                           "logging for further info.".format(file_paths[i]))
                     log_file_path = None
                 except:
@@ -99,7 +101,7 @@ def normalize_all(linkage_table_path):
                         "normalize the file {}: ".format(file_paths[i]) +
                         "{}".format(sys.exc_info()[0]))
                     excluded_files.append(i)
-                    print("- File {} could not be normalized. Please check "
+                    print("File {} could not be normalized. Please check "
                           "logging for further info.".format(file_paths[i]))
                     log_file_path = None
         else:
@@ -107,16 +109,16 @@ def normalize_all(linkage_table_path):
             logging.error("The file {} does not exist or the file path is "
                           "incorrect and it has been excluded from "
                           "normalisation.".format(file_paths[i]))
-            print("- File {} could not be normalized. Please check "
+            print("File {} could not be normalized. Please check "
                   "logging for further info.".format(file_paths[i]))
 
         log_file_paths.append(log_file_path)
 
     # Find global min and global max values
-    print("------ Finding global min/max values ------")
+    print("- Finding global min/max values")
     for idx, log_path in enumerate(log_file_paths):
         if log_path is not None:
-            print("- Checking file {0} of {1}".format(idx + 1,
+            print("Checking file {0} of {1}".format(idx + 1,
                   len(log_file_paths)))
             try:
                 min_value, max_value = get_min_max(log_path, min_val=min_value,
@@ -130,11 +132,11 @@ def normalize_all(linkage_table_path):
                 excluded_files.append(idx)
 
     # Min-max-scale all files
-    print("------ Min-max scaling files -------")
+    print("- Min-max scaling files")
     cnt = 1
     for j in range(0, len(file_paths)):
         if j not in excluded_files:
-            print("- Scaling file {0} of {1}.".format(cnt,
+            print("Scaling file {0} of {1}.".format(cnt,
                   len(file_paths) - len(excluded_files)))
             cnt += 1
             try:
@@ -146,7 +148,7 @@ def normalize_all(linkage_table_path):
                     'The following error has occurred while calling '
                     'the method min_max_scale_file() for the file {}: '
                     .format(file_paths[j]) + '{}'.format(err))
-                print("- File {} could not be scaled, please check logging "
+                print("File {} could not be scaled, please check logging "
                       "for further info.".format(file_paths[j]))
                 excluded_files.append(j)
 
@@ -359,8 +361,6 @@ def get_value_index(column_names):
     :return: index: Integer representing index of column with signal value in
              file
     """
-    column_names = column_names.split(',')
-
     if "SIGNAL_VALUE" in column_names:
         index = column_names.index("SIGNAL_VALUE")
     else:
