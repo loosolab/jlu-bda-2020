@@ -20,7 +20,7 @@ parser$add_argument("-b", "--biosources", nargs="+", type="character", default=N
                     help="(List of) selected biosources to include [default: all]")
 parser$add_argument("-m", "--marks", nargs="+", type="character", default=NULL,
                     help="(List of) selected transcription factors to include [default: all]")
-parser$add_argument("--chunk_size", type="integer", default=10000000L,
+parser$add_argument("--chunk_size", dest="chunks", type="integer", default=10000000L,
                     help="Chunk size for ATAC/DNAse data [default: %(default)s]")
 parser$add_argument("-l", "--check_local_files", dest="local_files", type="character", default=NULL,
                     help="External directory where local files are stored. Files in queue will be copied to the output directory and not downloaded. [default: NULL]")
