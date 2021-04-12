@@ -51,7 +51,7 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
     :param merge_tool: String with path to bigWigMerge tool
     """
     print("------ Merge forward/reverse reads ------")
-    print("------ Reading in linking table ------")
+    print("- Reading in linking table")
 
     if os.path.exists(linkage_table_path):
         linkage_frame = read_linkage_table(linkage_table_path)
@@ -59,7 +59,7 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
         raise FileNotFoundError("The file {0} does not exist or the filepath "
                                 "is incorrect".format(linkage_table_path))
 
-    print("------ Finding pairs for merging ------")
+    print("- Finding pairs for merging")
 
     pairs = find_pairs(linkage_frame)
     print("{} pairs were found".format(len(pairs)))
@@ -74,7 +74,7 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
         # If file format of forward/reverse reads is bedGraph, then convert to
         # bigWig for merging tool and make new pairs_merge List with only bigWig
         # file paths for merging
-        print("------ Converting bedGraph files to bigWig for merging ------")
+        print("- Converting bedGraph files to bigWig for merging")
 
         for idx, pair in enumerate(pairs):
             tmp_pair = []
@@ -111,7 +111,7 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
                 pairs_merge.append(tmp_pair)
 
         # Merge all file pairs with tool and save paths of merged files
-        print("------ Merging pairs ------")
+        print("- Merging pairs")
 
         for idx, pair in enumerate(pairs_merge):
             print("Merging pair {0} of {1}: {2}, {3}".format(idx + 1,
@@ -129,7 +129,7 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
                                 allowed_file_formats]
         if "bedgraph" not in allowed_file_formats and ("bigwig" in
            allowed_file_formats or "bw" in allowed_file_formats):
-            print("------ Converting merged files to bigWig ------")
+            print("- Converting merged files to bigWig")
 
             tmp_paths = []
             for j in range(0, len(merged_files)):
@@ -158,7 +158,7 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
 
         # Check if there are any bedGraph merged files that were converted to
         # bigWig and delete them since they are no longer needed
-        print("------ Deleting old files ------")
+        print("- Deleting old files")
 
         if len(old_files) > 0:
             for idx, file in enumerate(old_files):
@@ -182,7 +182,7 @@ def merge_all(linkage_table_path, chrom_sizes_paths, allowed_file_formats,
             delete_file(pairs_merge[idx_pair[0]][idx_pair[1]])
             cnt += 1
 
-        print("------ Appending entries for merged files to linking table ------")
+        print("- Appending entries for merged files to linking table")
 
         # Make rows to append to linkage table .csv file for merged files
         for m in range(0, len(merged_files)):
@@ -254,7 +254,7 @@ def find_pairs(linkage_frame):
 
 
 def convert_bedgraph_to_bigwig(bg_file_path, chrom_sizes_path,
-                               conversion_tool_path):
+                               conversion_tool_path="bedGraphToBigWig"):
     """
     Method converts a bedGraph file into a bigWig file.
 
@@ -276,7 +276,7 @@ def convert_bedgraph_to_bigwig(bg_file_path, chrom_sizes_path,
     return bw_file_path
 
 
-def merge_pair(bw_file_path_1, bw_file_path_2, merge_tool_path):
+def merge_pair(bw_file_path_1, bw_file_path_2, merge_tool_path="bigWigMerge"):
     """
     Method merges two bigWig forward/reverse read files into one bedGraph file
 
