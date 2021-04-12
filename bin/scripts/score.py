@@ -23,7 +23,7 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath):
     # go through beddict for each biosource, then each tf, then each chromosom, then every binding
     # get Peak and Area from beddict and calculate the scores
     for biosource in biosource_ls:
-
+        print("Analyzing: ", biosource)
         # load dictionarys contaning paths to chip and atac bigwig files
         try:
             atacdict = pickle.load(open(os.path.join(picklepath, genom, 'atac-seq', biosource + ".pickle"), "rb"))
@@ -39,6 +39,7 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath):
                 calculateddict[biosource] = {}
 
             for tf in chipdict:
+                print("Analyzing: ", tf)
                 # test if tf was requested by the user
                 if tf in tf_ls:
 
@@ -88,7 +89,7 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath):
                         except RuntimeError:
                             print('Unable to open file ' + file)
 
-                    print(tf, ' done')
+                    print("Finished analysis of ", tf')
 
                     # remove key if the value is empty
                     if calculateddict[biosource][tf]:
@@ -101,7 +102,7 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath):
                 pass
             else:
                 del calculateddict[biosource]
-
+            print("Finished analysis of", biosource)
     return calculateddict
 
 
