@@ -2,15 +2,19 @@
 
 ## Introduction
 
-This tool allows for the analysis and classification of transcription factors (TFs) by calculating the relations between observed TF binding sites and chromatin accessibility, using the [Deepblue Epigenomic Data Server](https://deepblue.mpi-inf.mpg.de/) to link epigenomic ChIP-seq and ATAC/DNAse-seq data by biosource (i.e. cell type).
+Transcription factors are well-known for their important role in regulating gene expression. Modern methods such as **ChIP-seq** (Chromatin Immunoprecipitation sequencing) allow for high-resolution detection of their DNA binding sites. Histone modification is another identifier of regulatory activity on the genome, and techniques such as **DNase-seq** (DNase I hypersensitive sites sequencing) and **ATAC-seq** (Assay for Transposase-Accessible Chromatin using sequencing) provide genome-wide information on DNA accessibility. Combining the observed binding sites of known transcription factors with the degree of DNA accessibility within the same regions of the same sample may reveal new insights on their function as transcriptional activators, repressors, or both.
+
+To this end, the TF Analyzer utilizes the [Deepblue Epigenomic Data Server](https://deepblue.mpi-inf.mpg.de/), which currently stores close to 40,000 ChIP-seq and roughly 3,800 DNase-seq experiments, to link corresponding DNA binding site and accessiblity experiments by their shared biosources (i.e. cell types). The downloaded files are normalized by means of both logarithmic and min/max scaling and individual scores are calculated for each transcription factor. The results are displayed as charts through a user-friendly web interface (see [Example case](#example-case)).
 
 The latest working build can be cloned from the `dev` branch.
+
+For further information on how this tool works, please check out our [wiki](https://github.com/loosolab/jlu-bda-2020/wiki/).
 
 **Workflow**
 
  1. Link and download epigenomic data matching user-requested biosources, TFs, genomes and chromosomes
  2. Convert, normalize and sort downloaded data if necessary
- 3. Calculate relations between ChIP and ATAC data for each TF and save results as CSV files
+ 3. Calculate relations between ChIP and ATAC/DNase data for each TF and save results as CSV files
  4. Visualize data through a self-hosted web application
  
 ## Requirements
@@ -48,6 +52,7 @@ dependencies:
   - tabulate=0.8.9
   - util-linux=2.36
   - psutil=5.8.0
+  - regex=2021.4.4
 ```
 
 ```bash
@@ -128,17 +133,19 @@ This command will download and analyze all data for transcription factor "AR", a
 
 **Results**
 
-The web application running on `localhost:4200` lets you select the transcription factors you want to look at. Three figures are currently available for each TF:
+The web application running on `localhost:4200` lets you select the transcription factors from your last run that you want to look at. Three figures are currently available for each TF:
 
 ![ar_20_Contour](https://user-images.githubusercontent.com/26332337/114243219-7f96ea00-998c-11eb-9de7-26adf0dc3483.png)
 
-3d Contour Plot: This plot shows the means of the ATAC scores on the x-axis, the ChIP scores on the y-axis and the density of these values on the z-axis.
+3d Contour Plot: Displays the mean ATAC/DNase scores on the x-axis, the ChIP scores on the y-axis and the density of these values on the z-axis.
 
 ![ar_20_Scatter](https://user-images.githubusercontent.com/26332337/114243247-8aea1580-998c-11eb-80a6-bf1589a25f46.png)
 
-Density Scatter Plot: This plot contains the means of the ATAC scores on the x-axis and the ChIP scores on the y-axis. The histograms on both axes are showing the distribution of respective ATAC/ChIP scores. This plot also contains a heatmap, which shows the densities of the values used. (Zooming in may be required to see the details.)
+Density Scatter Plot: Shows the mean ATAC/DNase scores on the x-axis and the ChIP scores on the y-axis. The histograms on both axes are showing the distribution of respective ATAC/ChIP scores. This plot also contains a heatmap, which shows the densities of the values used. (Zooming in may be required to see the details.)
 
 The third output is a table containing the weights of the individual components of the analysis.
+
+The results shown above are highly characteristic of a transcriptional activator due to a high degree of DNA accessibility and a high detection rate of DNA binding sites within the same genomic regions.
 
 If any problems occur in the visualization, please check the web console of your browser.
 
