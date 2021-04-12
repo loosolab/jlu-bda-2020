@@ -89,7 +89,7 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath):
                         except RuntimeError:
                             print('Unable to open file ' + file)
 
-                    print("Finished analysis of ", tf')
+                    print("Finished analysis of ", tf)
 
                     # remove key if the value is empty
                     if calculateddict[biosource][tf]:
