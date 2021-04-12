@@ -100,7 +100,6 @@ def read_bed(file):
     for index, row in f.iterrows():
         start = int(row['start'])
         end = int(row['end'])
-        score = float(row['SIGNAL_VALUE'])
 
         try:
             peak = row['PEAK']
@@ -110,6 +109,6 @@ def read_bed(file):
         # tests if a chromosome is already a key in the dictionary
         # if yes, the values are appended to the existing values of the key
         # if not, the key is added with the values
-        chromosome[row['seqnames']].append([start, end, score, peak])
+        chromosome[row['seqnames']].append([start, end, peak])
 
     return chromosome

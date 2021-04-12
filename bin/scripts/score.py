@@ -9,7 +9,7 @@ import pyBigWig
 import os
 
 
-def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath):
+def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
     """
     This function creates a dictionary containing the mean for both CHIP-seq and ATAC-seq scores over a specified area. 
     This area needs to be specified at first, with the help of the CHIP-seq pickle and the value "w".
@@ -68,12 +68,12 @@ def findarea(w, genom, biosource_ls, tf_ls, chr_list, outpath):
                                     for binding in chipdict[tf][file][chromosom]:
 
                                         start = binding[0]
-                                        peak = binding[3]
+                                        peak = binding[2]
 
                                         # calculate the area to be analyzed
                                         peaklocation = start + peak
-                                        peaklocationstart = peaklocation - w
-                                        peaklocationend = peaklocation + w
+                                        peaklocationstart = peaklocation - width
+                                        peaklocationend = peaklocation + width
 
                                         # call scores between start and end from atac and chip using pyBigWig
                                         if chromosom in chip.chroms() and chromosom in atac.chroms():
