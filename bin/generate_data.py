@@ -84,7 +84,8 @@ class DataConfig:
         downloaded.
         """
         logging.info("starting csv creation")
-        tool = os.path.join(self.binpath, "scripts", "csv.r")
+        tool = os.path.join(self.binpath, "scripts",
+                            "generate_linking_table.r")
         path = os.path.join(self.outpath, "data", "download")
         args = [tool, "-d", path, "-o", self.csvname, "-g"]
         args.extend(self.genome)
@@ -111,7 +112,8 @@ class DataConfig:
 
         """
         logging.info("starting data download")
-        tool = os.path.join(self.binpath, "scripts", "export_from_csv.r")
+        tool = os.path.join(self.binpath, "scripts",
+                            "download_deepblue_data.r")
         csv = os.path.join(self.outpath, "data", "download", self.csvname)
         outdir = os.path.join(self.outpath, "data", "download")
         if self.localfiles is not None:
@@ -164,7 +166,6 @@ class DataConfig:
         for genome in self.genome:
             chromsizes.append(os.path.join(self.outpath, "data",
                                            "chromsizes", genome + ".chrom.sizes"))
-        # TODO: self.chromsizes replace with array that contains paths to direct files
         merge_all(csvpath, chromsizes, ["bigwig"],
                   bedgraphtobigwig, bigwigMerge)
         logging.info("finished forward reverse merging")
