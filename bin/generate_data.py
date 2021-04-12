@@ -242,7 +242,7 @@ class DataConfig:
             os.remove(old_norm)
             os.rename(norm_csv, old_norm)
         logging.info(
-            "cleaned up normalization, the run can be found at %d", old_norm)
+            "cleaned up normalization, the run can be found at %s", old_norm)
 
     def generate_dictionaries(self):
         """Generate pickle files for the downloaded data """
