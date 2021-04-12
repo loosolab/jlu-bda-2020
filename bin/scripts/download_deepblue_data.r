@@ -12,7 +12,15 @@ parser$add_argument("-i", "--input", type="character", default="linking_table.cs
                     help="Input CSV file name with extension [default: \"%(default)s\"]")
 parser$add_argument("-o", "--output", type="character", default=".",
                     help="Output directory name [default: \"%(default)s\"]")
-parser$add_argument("-c", "--chunks", type="integer", default=10000000L,
+parser$add_argument("-g", "--genome", type="character", default=NULL,
+                    help="Selected genome to include [default: \"%(default)s\"]")
+parser$add_argument("-c", "--chromosomes", nargs="+", type="character", default=NULL,
+                    help="(List of) selected chromosomes to include (requires chr prefix) [default: all]")
+parser$add_argument("-b", "--biosources", nargs="+", type="character", default=NULL,
+                    help="(List of) selected biosources to include [default: all]")
+parser$add_argument("-m", "--marks", nargs="+", type="character", default=NULL,
+                    help="(List of) selected transcription factors to include [default: all]")
+parser$add_argument("--chunk_size", type="integer", default=10000000L,
                     help="Chunk size for ATAC/DNAse data [default: %(default)s]")
 parser$add_argument("-l", "--check_local_files", dest="local_files", type="character", default=NULL,
                     help="External directory where local files are stored. Files in queue will be copied to the output directory and not downloaded. [default: NULL]")
@@ -31,7 +39,7 @@ suppressPackageStartupMessages(
 # remain, the function will call download_regions() for each file (and chunk) to
 # request the corresponding regions from the Deepblue server.
 
-export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
+export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,local_dir) {
   
   failed_warning <- function(filename,request_id,msg) {
     warning(paste(
@@ -162,12 +170,29 @@ export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
   
   # This section creates a queue of files that need to be downloaded.
   
-  data <- fread(
+  csv_data <- fread(
     file=csv_file,
     header=TRUE,
-    sep=";",
-    select=c("experiment_id","filename","format","technique","genome")
+    sep=";"
   )
+  
+  # If genome, biosource, chromosome or tf arguments are provided, filter the
+  # linking table by the respective values.
+  
+  if(is.null(genom)) {
+    genom <- unique(csv_data$genome)[1]
+  }
+  if(is.null(bios)) {
+    bios <- unique(csv_data$biosource)
+  }
+  if(is.null(marks)) {
+    marks <- unique(csv_data$epigenetic_mark)
+  }
+  if(is.null(chroms)) {
+    chroms <- unique(csv_data$chromosome)
+  }
+  
+  data <- csv_data[genome %in% genom & biosource %in% bios & chromosome %in% chroms & epigenetic_mark %in% c(marks,"dnasei","dna accessibility")]
 
   # The script checks whether there are files that have already been downloaded
   # in the output folder. Is this the case then they are removed from the queue.
@@ -193,7 +218,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
       ext_files <- dir(path=local_dir,pattern=".meta.txt")
       ext_files.compare <- gsub(".meta.txt","",ext_files)
       ext_files.inqueue <- ext_files.compare[ext_files.compare %in% queued_files$filename]
-      message(paste("found",length(ext_files.inqueue),"experiments in",local_dir))
+      message(paste("found",length(ext_files.inqueue),"experiment(s) in",local_dir))
       if(length(ext_files.inqueue) > 0) {
         for(experiment in ext_files.inqueue) {
           allfiles <- dir(path=local_dir,pattern=paste("^",experiment,sep=""))
@@ -228,7 +253,7 @@ export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
     
     for(i in 1:n_files) {
       
-      progress_msg <- paste("downloading file",i,"of",n_files)
+      progress_msg <- paste("downloading experiment",i,"of",n_files)
       
       row <- queued_files[i,]
       filename <- row$filename
@@ -292,4 +317,4 @@ export_from_csv <- function(csv_file,out_dir,chunk_size,local_dir) {
   
 }
 
-export_from_csv(args$input,args$output,as.integer(args$chunks),args$local_files)
+export_from_csv(args$input,args$output,args$genome,args$biosources,args$chromosomes,args$marks,as.integer(args$chunks),args$local_files)
