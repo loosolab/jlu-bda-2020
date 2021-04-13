@@ -144,7 +144,7 @@ rename '.meta' '.meta.txt' "$source_path"/*.meta &>/dev/null
 
 #Merge atac-seq chunks
 echo "merging chunks"
-#merge_chunks "$source_path"
+merge_chunks "$source_path"
 
 echo "validating files"
 headers=$(head -n 1 "$source_path/$csv_name")
