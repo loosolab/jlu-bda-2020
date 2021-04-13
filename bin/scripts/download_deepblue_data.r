@@ -57,34 +57,32 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
   # has been exported to its expected location. In this case TRUE is returned
   # and export_to_csv() will export the metadata of the current experiment.
   
-  download_regions <- function(id,filename,chr,format,chunk,out_dir) {
+  download_regions <- function(id,filename,chr,format,chunk,expected_regions,out_dir) {
     
     regions_length <- 0
     message(filename)
     
-    query_id <- suppressMessages(deepblue_select_experiments(experiment_name = id, chromosome = chr, start = chunk, end = chunk + chunk_size))
-    message(paste("query id:",query_id))
-    
-    # for ATAC/DNAse-seq files (chunk > 0), filter out regions with the value 0
+    # For ATAC/DNAse-seq files (chunk > 0), filter out regions with the value 0.
+    # Also count expected regions again since linking table does not take chunks
+    # into account.
     
     if(chunk > 0) {
+      query_id <- suppressMessages(deepblue_select_experiments(experiment_name = id, chromosome = chr, start = chunk, end = chunk + chunk_size))
+      message(paste("query id:",query_id))
       query_id <- suppressMessages(deepblue_filter_regions(query_id = query_id, field = "VALUE", operation = "!=", value = "0", type = "number"))
       message(paste("filtered query id:",query_id))
-    }
-    
-    count_request <- suppressMessages(deepblue_count_regions(query_id))
-    expected_regions <- as.integer(suppressMessages(deepblue_download_request_data(count_request,do_not_cache=TRUE)))
-    
-    if(expected_regions == 0) {
+      count_request_id <- suppressMessages(deepblue_count_regions(query_id))
+      expected_regions <- as.integer(suppressMessages(deepblue_download_request_data(count_request_id, do_not_cache=TRUE)))
       
-      # this is not considered an error
-      warning(paste("No regions available for",filename,"(skipping) query_id:",query_id))
-      message("skipping")
+      if(expected_regions == 0) {
+        # No available data for current chunk of DNase/ATAC file on current
+        # chromosome
+        return(TRUE)
+      }
       
-      # output_file <- paste(out_dir,"/",filename,".txt",sep="")
-      # return(file.create(output_file)) # returns TRUE if file could be created
-      return(TRUE)
-      
+    } else {
+      query_id <- suppressMessages(deepblue_select_experiments(experiment_name = id, chromosome = chr))
+      message(paste("query id:",query_id))
     }
     
     request_id <- suppressMessages(deepblue_get_regions(query_id = query_id, output_format = format))
@@ -94,7 +92,7 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
     
     if(req_status != "removed") {
       
-      regions <- try(suppressMessages(deepblue_download_request_data(request_id,do_not_cache=TRUE)))
+      regions <- try(suppressMessages(deepblue_download_request_data(request_id, do_not_cache=TRUE)))
       
       if(class(regions) != "GRanges") {
         
@@ -139,7 +137,7 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
             } else {
               
               # the download was successful
-              message("done")
+              message("done\n")
               return(TRUE)
               
             }
@@ -148,8 +146,10 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
           
         } else {
           
-          failed_warning(filename,request_id,"returned empty file, expected",expected_regions,"regions")
-          return(FALSE)
+          if(chunk > 0) {
+            failed_warning(filename,request_id,"returned empty file, expected",expected_regions,"regions")
+            return(FALSE)
+          }
           
         }
         
@@ -193,7 +193,7 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
   }
   
   data <- csv_data[genome %in% genom & biosource %in% bios & chromosome %in% chroms & epigenetic_mark %in% c(marks,"dnasei","dna accessibility")]
-
+  
   # The script checks whether there are files that have already been downloaded
   # in the output folder. Is this the case then they are removed from the queue.
   # An existing [filename].meta.txt file is considered a flag for a successfully
@@ -245,7 +245,7 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
     chrom_sizes <- vector("list")
     for(genome in genomes) {
       chroms <- suppressMessages(deepblue_chromosomes(genome))
-      chroms$id <- tolower(chroms$id)
+      chroms$id <- chroms$id
       chrom_sizes[[genome]] <- chroms
     }
     
@@ -257,13 +257,14 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
       
       row <- queued_files[i,]
       filename <- row$filename
-      chr <- tolower(sub(".*\\.(chr.*?)(\\..*|$)","\\1",filename))
+      chr <- row$chromosome
       id <- row$experiment_id
+      regions <- as.integer(row$regions)
       
       if(row$technique == "chip-seq") {
         
         message(progress_msg)
-        no_errors <- download_regions(id,filename,chr,row$format,0,out_dir)
+        no_errors <- download_regions(id,filename,chr,row$format,0,regions,out_dir)
         
       } else {
         
@@ -272,14 +273,24 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
         chunks <- seq(1,this_chrom_size,by=chunk_size)
         n_chunks <- length(chunks)
         
-        for(j in 1:n_chunks) {
+        if(n_chunks > 1){
+        
+          for(j in 1:n_chunks) {
+            
+            message(paste(progress_msg,"- chunk",j,"of",n_chunks))
+            chunked_filename <- paste(filename,"chunk",chunks[j],sep="_")
+            no_errors <- download_regions(id,chunked_filename,chr,row$format,chunks[j],regions,out_dir)
+            if(!no_errors) break
+            
+          }
+            
+        } else {
           
-          message(paste(progress_msg,"- chunk",j,"of",n_chunks))
-          chunked_filename <- paste(filename,"chunk",chunks[j],sep="_")
-          no_errors <- download_regions(id,chunked_filename,chr,row$format,chunks[j],out_dir)
-          if(!no_errors) break
+          message(progress_msg)
+          no_errors <- download_regions(id,filename,chr,row$format,0,regions,out_dir)
           
         }
+        
       }
       
       if(no_errors) {
