@@ -37,6 +37,9 @@ def main():
                                   The files matching query will be copied from here instead of downloaded.
     """
 
+    # import logging, author: Jonathan
+    import scripts.setup_logging
+
     # import score, author: Noah
     import scripts.score
 
@@ -128,6 +131,9 @@ def main():
                         cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'visualization')))
 
     else:
+        # logging
+        logfile = scripts.setup_logging.setup(args.output_path)
+
         if args.offline:
             if lt is not None:
                 genome_choices = list(set(lt['genome']))
@@ -227,7 +233,8 @@ def main():
             # download data from download_dict
             requested_data = generate_data.DataConfig([args.genome], args.chromosome, args.biosource, args.tf,
                                                       args.output_path, 'linking_table.csv', 'bigwig',
-                                                      args.check_local_files, args.redo_file_validation, args.offline)
+                                                      args.check_local_files, args.redo_file_validation, args.offline,
+                                                      logfile)
             requested_data.pull_data()
 
             # run the script score.py and store the calculated scores in the dictionary 'scores'
