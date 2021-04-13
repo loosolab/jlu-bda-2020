@@ -194,6 +194,21 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
   
   data <- csv_data[genome %in% genom & biosource %in% bios & chromosome %in% chroms & epigenetic_mark %in% c(marks,"dnasei","dna accessibility")]
   
+  # !
+  # This section alters the queue so only the first DNase-seq files for each
+  # biosource and chromosome is kept (to reduce download time), since only one
+  # DNase file is used for the analysis.
+  # This will not be included in the final version.
+  
+  csv_chr <- rbindlist(
+    apply(expand.grid(bios,chroms),1,function(x) {
+      tmp <- data[technique != "chip-seq" & chromosome == x[2] & biosource == x[1]]
+      return(tmp[1,])
+    })
+  )$experiment_id
+  
+  data <- data[technique == c("chip-seq") | experiment_id %in% csv_chr[!is.na(csv_chr)]]
+  
   # The script checks whether there are files that have already been downloaded
   # in the output folder. Is this the case then they are removed from the queue.
   # An existing [filename].meta.txt file is considered a flag for a successfully
