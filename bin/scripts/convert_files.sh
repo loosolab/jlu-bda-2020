@@ -76,11 +76,18 @@ convert_file() {
 				cut --fields 1-3,6 "$newfile" > "$6/tempfile"
 				mv "$6/tempfile" "$newfile"
 			fi
+			new_filename="$file_name.bw"
 			tail -n +2 "$newfile" > "$6/tempfile"
 			mv "$6/tempfile" "$newfile"
 			bedGraphToBigWig "$newfile" \
-				"$5/$4.chrom.sizes" "$out_path/$file_name.bw"
-			new_filename="$file_name.bw"
+				"$5/$4.chrom.sizes" "$out_path/$new_filename" &>/dev/null
+			if [ $? == 255 ]; then
+				echo "overlapping regions found"
+				bedRemoveOverlap "$newfile" "$6/tempfile"
+				mv "$6/tempfile" "$newfile"
+				bedGraphToBigWig "$newfile" \
+				"$5/$4.chrom.sizes" "$out_path/$new_filename"
+			fi
 		else
 				echo "unexpected file: $2 $file_extension" # TODO: proper error handling
 		fi
@@ -118,7 +125,7 @@ merge_chunks() {
 	done
 }
 
-echo "validating files"
+echo "---- File validation ----"
 filetype=$1
 source_path=$2
 out_path=$3/temp
@@ -136,8 +143,10 @@ rename '.txt' '' "$source_path"/*.txt &>/dev/null # TODO: error when doublequoti
 rename '.meta' '.meta.txt' "$source_path"/*.meta &>/dev/null
 
 #Merge atac-seq chunks
-merge_chunks "$source_path"
+echo "merging chunks"
+#merge_chunks "$source_path"
 
+echo "validating files"
 headers=$(head -n 1 "$source_path/$csv_name")
 echo "${headers:0:87}file_path;${headers:87}" > "$new_link"
 #===============================================================================
@@ -152,7 +161,6 @@ do
 	fi
 
 	source_file="$source_path/$filename"
-
 	validate_filetype "$filename" "$format"
 	cp "$source_file" "$out_path/$new_filename"
 	source_file="$out_path/$new_filename"
