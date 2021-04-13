@@ -59,15 +59,19 @@ def parse(data_path):
                 # the key for tf_bed_dict is the path of the associated bigwig-file
                 for f in files:
                     if f.lower().endswith('.bed'):
-                        tf_bed_dict[os.path.join(data_path, genome, biosource, 'chip-seq', tf,f).replace('.bed','.bw')] = read_bed(os.path.join(data_path, genome, biosource, 'chip-seq', tf, f))
+                        bw = os.path.exists(os.path.join(data_path, genome, biosource, 'chip-seq', tf,f).replace('.bed','.bw'))
+                        if os.path.exists(bw):
+                            tf_bed_dict[os.path.join(data_path, genome, biosource, 'chip-seq', tf,f).replace('.bed','.bw')] = read_bed(os.path.join(data_path, genome, biosource, 'chip-seq', tf, f))
 
                 # the bed data of the tf is stored in the chip dictionary for the biosource with tf as key
-                bs_bed_dict[tf] = tf_bed_dict
+                if tf_bed_dict:
+                    bs_bed_dict[tf] = tf_bed_dict
 
             # a pickle file is created that contains the chip data of one biosource
             # it is named after the biosource
-            with open(os.path.join(data_path, 'pickledata', genome, 'chip-seq', biosource + '.pickle'), 'wb') as handle:
-                pickle.dump(bs_bed_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            if bs_bed_dict:
+                with open(os.path.join(data_path, 'pickledata', genome, 'chip-seq', biosource + '.pickle'), 'wb') as handle:
+                    pickle.dump(bs_bed_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
             # list all files for atac data of one biosource
             # save the path to the bigwig file with the greatest size in dictionary atac; key is chromosome
@@ -95,7 +99,7 @@ def read_bed(file):
 
     chromosome = defaultdict(list)
 
-    f = pd.read_csv(file, sep='\t', usecols=lambda c: c in {'seqnames', 'start', 'end', 'SIGNAL_VALUE', 'PEAK'}, index_col=False)
+    f = pd.read_csv(file, sep='\t', usecols=lambda c: c in {'seqnames', 'start', 'end', 'PEAK'}, index_col=False)
 
     for index, row in f.iterrows():
         start = int(row['start'])
