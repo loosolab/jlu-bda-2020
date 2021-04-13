@@ -35,7 +35,7 @@ validate_filetype () {
 		filetype="bed"
 		# calculate the index of the value column to properly cut into bedgraph
 		header=$(head -n 1 "$source_path/$1")
-		header=("$header")
+		header=($header)
 		cut_value=0
 		for i in "${!header[@]}"; do
 		   if [[ "${header[$i]}" = "SIGNAL_VALUE" ]]; then
