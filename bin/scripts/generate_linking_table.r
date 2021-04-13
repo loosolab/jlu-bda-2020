@@ -81,9 +81,14 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
       filename <- unname(x[1])
       chr <- unname(x[2])
       
-      query_id <- suppressMessages(deepblue_select_experiments(experiment_name=filename, chromosome=chr))
-      request_id <- suppressMessages(deepblue_count_regions(query_id))
-      region_len <- as.integer(suppressMessages(deepblue_download_request_data(request_id, do_not_cache=TRUE)))
+      if(tolower(metadata$technique) == "chip-seq") {
+        query_id <- suppressMessages(deepblue_select_experiments(experiment_name=filename, chromosome=chr))
+        request_id <- suppressMessages(deepblue_count_regions(query_id))
+        region_len <- as.integer(suppressMessages(deepblue_download_request_data(request_id, do_not_cache=TRUE)))
+      } else {
+        # DNase/ATAC-seq regions will be checked chunk-wise during the download
+        region_len <- 1
+      }
       
       if(region_len > 0) {
         
