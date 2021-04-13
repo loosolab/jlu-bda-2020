@@ -2,10 +2,10 @@ import subprocess
 import os
 import logging
 from csv import reader, writer
-from datetime import datetime
 from scripts.merge_reads import merge_all
 from scripts.generate_pickle import parse
 from scripts.normalize_signal_values import normalize_all
+from scripts.setup_logging import setup
 # //TODO: angular insall in visualisation folder
 
 
@@ -16,7 +16,7 @@ class DataConfig:
       """
 
     def __init__(self, genome, chromosome, biosource, epigenetic_mark,
-                 output_path, csv_name, datatype, localfiles, redoverification, offline):
+                 output_path, csv_name, datatype, localfiles, redoverification, offline, logfile):
         self.genome = genome
         self.chromosome = chromosome
         self.biosource = biosource
@@ -28,36 +28,9 @@ class DataConfig:
         self.localfiles = localfiles
         self.redoverification = redoverification
         self.offline = offline
-        self.logfile = self.setup()
+        self.logfile = logfile
 
         logging.info(self.genome + self.biosource + self.epigenetic_mark)
-
-    def setup(self):
-        """
-        Sets up logging and Ensures proper filestructure is given.
-        """
-        time = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-        temp = os.path.join(self.outpath, "data", "temp")
-        result = os.path.join(self.outpath, "results")
-        logs = os.path.join(self.outpath, "logs")
-        download = os.path.join(self.outpath, "data", "download")
-        chromsizes = os.path.join(self.outpath,
-                                  "data", "chromsizes")
-        if not os.path.exists(download):
-            os.makedirs(download)
-        if not os.path.exists(temp):
-            os.makedirs(temp)
-        if not os.path.exists(result):
-            os.makedirs(result)
-        if not os.path.exists(logs):
-            os.makedirs(logs)
-        if not os.path.exists(chromsizes):
-            os.makedirs(chromsizes)
-
-        logname = time + "_generate_data.log"
-        logfile = os.path.join(logs, logname)
-        logging.basicConfig(filename=logfile, level=logging.INFO)
-        return logfile
 
     def pull_data(self):
         """ Recommended way to use this wrapper. Calls all needed functions.
@@ -241,8 +214,9 @@ class DataConfig:
         except OSError:
             os.remove(old_norm)
             os.rename(norm_csv, old_norm)
+
         logging.info(
-            "cleaned up normalization, the run can be found at %s", old_norm)
+            f"cleaned up normalization, the run can be found at {old_norm}")
 
     def generate_dictionaries(self):
         """Generate pickle files for the downloaded data """
