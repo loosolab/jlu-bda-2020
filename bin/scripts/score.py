@@ -85,7 +85,8 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
                                             for i in (chip_score, atac_score):
                                                 calculationls.append(
                                                     calculate_mean(i, peaklocationstart, peaklocationend))
-                                            calculateddict[biosource][tf][chromosom].append(calculationls)
+                                            if calculationls not in calculateddict[biosource][tf][chromosom]:
+                                                calculateddict[biosource][tf][chromosom].append(calculationls)
                         except RuntimeError:
                             print('Unable to open file ' + file)
 
