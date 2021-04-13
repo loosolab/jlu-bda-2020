@@ -24,7 +24,7 @@ export class GraphTfComponent implements OnInit {
   }
 
   createGraphs() {
-    //This function creates objects for graphs and tables and sorts them into arrays. The biosources and tfs are although sorted.
+    //This function creates objects for graphs and tables and sorts them into arrays. The biosources and tfs are also sorted.
     var rawData: any
     rawData = this.api_service.RawGraphData.value
     let temp_bio = []
