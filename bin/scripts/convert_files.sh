@@ -33,6 +33,15 @@ validate_filetype () {
 	| "CHROMOSOME,START,END,NAME,SCORE"\
 	| "CHROMOSOME,START,END,NAME")
 		filetype="bed"
+		# calculate the index of the value column to properly cut into bedgraph
+		header=$(head -n 1 "$source_path/$1")
+		header=("$header")
+		cut_value=0
+		for i in "${!header[@]}"; do
+		   if [[ "${header[$i]}" = "SIGNAL_VALUE" ]]; then
+		   	   cut_value=$((i+1))
+		   fi
+		done
 		;;
 	*)
 		echo "unrecognized file format"
@@ -67,7 +76,7 @@ convert_file() {
 	fi
 	if [ "$3" == "bigwig" ] || [ "$3" == "bw" ]; then
 		if  [ "$file_extension" == "bed" ]; then
-			cut --fields 1-3,8 "$1" > "$out_path/$file_name.bedgraph"
+			cut --fields 1-3,$cut_value "$1" > "$out_path/$file_name.bedgraph"
 			file_extension="bedgraph"
 		fi
 		if [ "$file_extension" == "bedgraph" ]; then
