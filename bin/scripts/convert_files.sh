@@ -35,7 +35,7 @@ validate_filetype () {
 		filetype="bed"
 		# calculate the index of the value column to properly cut into bedgraph
 		header=$(head -n 1 "$source_path/$1")
-		header=($header)
+		header=($header) #intentionally split at tab into array
 		cut_value=0
 		for i in "${!header[@]}"; do
 		   if [[ "${header[$i]}" = "SIGNAL_VALUE" ]]; then
@@ -44,15 +44,13 @@ validate_filetype () {
 		done
 		;;
 	*)
-		echo "unrecognized file format"
-		new_filename=$1 #filename stays the same
+		echo "unrecognized file format, $1 can not be used"
 		return 2
 		;;
 	esac
 	if [ "$filetype" != "$file_extension" ]; then #filename gets new ending
 		new_filename=$(basename "$1")
 		new_filename="${new_filename}.$filetype"
-		return 1
 	else
 		new_filename=$1 # filename stays the same
 	fi
@@ -171,6 +169,10 @@ do
 
 	source_file="$source_path/$filename"
 	validate_filetype "$filename" "$format"
+	if [ $? == 2 ]; then # invalid file, does not contain needed information
+		continue
+	fi
+
 	cp "$source_file" "$out_path/$new_filename"
 	source_file="$out_path/$new_filename"
 	convert_file "$source_file" "$new_filename" "$filetype" "$genome" "$chrom_path" "$out_path"
