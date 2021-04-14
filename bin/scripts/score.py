@@ -14,6 +14,9 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
     This function creates a dictionary containing the mean for both CHIP-seq and ATAC-seq scores over a specified area. 
     This area needs to be specified at first, with the help of the CHIP-seq pickle and the value "w".
     """
+
+    print('------Calculating score------')
+
     # path to pickledata
     picklepath = os.path.abspath(
         os.path.join(outpath, 'data', 'pickledata'))
@@ -23,7 +26,7 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
     # go through beddict for each biosource, then each tf, then each chromosom, then every binding
     # get Peak and Area from beddict and calculate the scores
     for biosource in biosource_ls:
-        print("Analyzing: ", biosource)
+        print("Analyzing biosource: ", biosource)
         # load dictionarys contaning paths to chip and atac bigwig files
         try:
             atacdict = pickle.load(open(os.path.join(picklepath, genom, 'atac-seq', biosource + ".pickle"), "rb"))
@@ -31,7 +34,7 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
         except FileNotFoundError:
             atacdict = None
             chipdict = None
-            print('There is not data for biosource ' + biosource)
+            print('-There is no data for biosource ' + biosource)
 
         if atacdict and chipdict:
             # generate key for biosource if it does not exist
@@ -39,7 +42,7 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
                 calculateddict[biosource] = {}
 
             for tf in chipdict:
-                print("Analyzing: ", tf)
+                print("-Analyzing transcription factor: ", tf)
                 # test if tf was requested by the user
                 if tf in tf_ls:
 
@@ -47,7 +50,11 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
                     if tf not in calculateddict[biosource]:
                         calculateddict[biosource][tf] = {}
 
+                    count = 1
                     for file in chipdict[tf]:
+
+                        print('Calculating file {} of {}'.format(count,len(chipdict[tf])))
+                        count += 1
 
                         try:
                             # open chip bigwig for tf
@@ -90,7 +97,7 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
                         except RuntimeError:
                             print('Unable to open file ' + file)
 
-                    print("Finished analysis of ", tf)
+                    print('Finished analysis of ', tf)
 
                     # remove key if the value is empty
                     if calculateddict[biosource][tf]:
