@@ -196,9 +196,11 @@ class DataConfig:
                         biosource = header.index("biosource")
                         chromosome = header.index("chromosome")
                         filename = header.index("filename")
+                        tf = header.index("epigenetic_mark")
                         for row in csv_reader:
                             if (row[genome] in self.genome and
-                                row[biosource] in self.biosource and
+                                    row[biosource] in self.biosource and
+                                    row[tf] in self.epigenetic_mark and
                                     row[chromosome] in self.chromosome and
                                     row[filename].endswith(".bw")):
                                 outcsv.writerow(row)
