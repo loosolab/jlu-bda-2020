@@ -165,7 +165,7 @@ def main():
 
                 chromosomes = {}
                 for genome in genome_choices:
-                    chrom = [x[0].lower() for x in server.chromosomes(genome, user_key)[1]]
+                    chrom = [x[0] for x in server.chromosomes(genome, user_key)[1]]
                     chromosomes[genome] = natsorted(chrom)
             except Exception as e:
                 sys.exit(str(e) + ': No connection could be established to deepblue. If you want to run an analysis with '

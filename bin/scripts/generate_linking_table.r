@@ -65,6 +65,9 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   # of data.tables which new_row() returns. Only the `filename` and `chromosome`
   # columns will differ between the three rows.
   #
+  # For each experiment (and chromosome), the number of regions available on
+  # Deepblue is checked beforehand to avoid including non-existent data in the
+  # CSV.
   # The resulting list of data.tables is rbound into a single data.table and
   # appended to the CSV file.
   
@@ -75,36 +78,54 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
     
     return_list <- apply(expand.grid(name,chrs),1,function(x) {
       
-      dots <- strsplit(x[1],".",fixed=TRUE)[[1]]
-      mylen <- length(dots)
-      if(mylen > 1) {
-        tmp <- dots[mylen]
-        dots[mylen] <- x[2]
-        dots[mylen+1] <- tmp
-        filename <- paste(dots,collapse=".")
+      filename <- unname(x[1])
+      chr <- unname(x[2])
+      
+      if(tolower(metadata$technique) == "chip-seq") {
+        query_id <- suppressMessages(deepblue_select_experiments(experiment_name=filename, chromosome=chr))
+        request_id <- suppressMessages(deepblue_count_regions(query_id))
+        region_len <- as.integer(suppressMessages(deepblue_download_request_data(request_id, do_not_cache=TRUE)))
       } else {
-        filename <- paste(x,collapse=".")
+        # DNase/ATAC-seq regions will be checked chunk-wise during the download
+        region_len <- 1
       }
       
-      meta <- data.table(
-        experiment_id=metadata$`_id`,
-        genome=metadata$genome,
-        biosource=tolower(metadata$sample_info$biosource_name),
-        technique=tolower(metadata$technique),
-        epigenetic_mark=tolower(metadata$epigenetic_mark),
-        chromosome=x[2],
-        filename,
-        data_type=metadata$data_type,
-        format=metadata$format,
-        sample_id=metadata$sample_id,
-        project=metadata$project,
-        total_size=metadata$upload_info$total_size
-      )
-      return(meta)
+      if(region_len > 0) {
+        
+        dots <- strsplit(filename,".",fixed=TRUE)[[1]]
+        mylen <- length(dots)
+        if(mylen > 1) {
+          tmp <- dots[mylen]
+          dots[mylen] <- chr
+          dots[mylen+1] <- tmp
+          filename <- paste(dots,collapse=".")
+        } else {
+          filename <- paste(x,collapse=".")
+        }
+        
+        meta <- data.table(
+          experiment_id=metadata$`_id`,
+          genome=metadata$genome,
+          biosource=tolower(metadata$sample_info$biosource_name),
+          technique=tolower(metadata$technique),
+          epigenetic_mark=tolower(metadata$epigenetic_mark),
+          chromosome=chr,
+          filename,
+          data_type=metadata$data_type,
+          format=metadata$format,
+          sample_id=metadata$sample_id,
+          project=metadata$project,
+          regions=region_len
+        )
+        return(meta)
+        
+      }
       
     })
     
     fwrite(rbindlist(return_list),file=output_file,na="",sep=";",append = TRUE)
+    
+    return(length(return_list[lengths(return_list) != 0]))
     
   }
   
@@ -142,7 +163,7 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
   all_chroms <- suppressMessages(deepblue_chromosomes(genome = genome))
   
   if(!skip) {
-    all_genomes <- suppressMessages(tolower(deepblue_list_genomes()$name))
+    all_genomes <- suppressMessages(deepblue_list_genomes()$name)
     if(!genome %in% all_genomes) {
       stop(paste("No valid genomes provided by user. Available genomes:",paste(all_genomes,collapse=", ")))
     }
@@ -287,22 +308,20 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
     }
     
     all_metadata <- c(chip_metadata,atac_metadata)
+    line_count <- 0
     
     if(append) {
-      line_count <- 0
       for(m in all_metadata) {
         filtered_chrs <- chrs[!chrs %in% old_data[experiment_id==m$`_id`]$chromosome]
         if(length(filtered_chrs) > 0) {
-          new_row(m,output_file,filtered_chrs)
-          line_count <- line_count + length(filtered_chrs)
+          line_count <- line_count + new_row(m,output_file,filtered_chrs)
         }
       }
       message(paste(line_count,"lines added to",normalizePath(output_file)))
     } else {
       for(m in all_metadata) {
-        new_row(m,output_file,chrs)
+        line_count <- line_count + new_row(m,output_file,chrs)
       }
-      line_count <- length(all_metadata) * length(chrs)
       message(paste(line_count,"lines written to",normalizePath(output_file)))
     }
     
