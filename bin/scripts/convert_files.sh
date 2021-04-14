@@ -133,6 +133,7 @@ merge_chunks() {
 }
 
 echo "---- File validation ----"
+echo "Some files can take a long time to validate"
 filetype=$1
 source_path=$2
 out_path=$3/temp
@@ -156,6 +157,7 @@ merge_chunks "$source_path"
 echo "validating files"
 headers=$(head -n 1 "$source_path/$csv_name")
 echo "${headers:0:87}file_path;${headers:87}" > "$new_link"
+count=0
 #===============================================================================
 # Goes through all lines of the .csv and validates the file before attempting
 # to convert it to the proper filetype
@@ -186,4 +188,9 @@ $chromosome;$new_filename;$data_type;$filepath;$format;$remaining"\
 	echo "$experiment_id;$genome;$biosource;$technique;$epigenetic_mark;\
 $chromosome;$new_filename;$data_type;$filepath;$format;$remaining"\
 	>> "$new_link"
+
+	count=$((count+1))
+	if ! (( count % 5 )) ; then
+		echo "validated $count files"
+	fi
 done < <(tail --lines +2 "$source_path/$csv_name")
