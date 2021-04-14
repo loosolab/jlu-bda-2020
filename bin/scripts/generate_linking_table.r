@@ -123,7 +123,7 @@ create_linking_table <- function(genome,chrs,filter_biosources,chip_type,atac_ty
       
     })
     
-    fwrite(rbindlist(return_list),file=output_file,na="",sep=";",append = TRUE)
+    if(!is.null(return_list)) fwrite(rbindlist(return_list),file=output_file,na="",sep=";",append = TRUE)
     
     return(length(return_list[lengths(return_list) != 0]))
     
