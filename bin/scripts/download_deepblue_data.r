@@ -79,7 +79,10 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
       if(expected_regions == 0) {
         # No available data for current chunk of DNase/ATAC file on current
         # chromosome
+        message("regions: 0")
         return(TRUE)
+      } else {
+        message(paste("expected regions:",expected_regions))
       }
       
     } else {
@@ -272,19 +275,18 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
       
       attempt <- 1
       chunk_start <- 1
+      row <- queued_files[i,]
+      filename <- row$filename
+      chr <- row$chromosome
+      id <- row$experiment_id
+      regions <- as.integer(row$regions)
       
       while(attempt <= retry) {
       
         progress_msg <- ifelse(attempt > 1,
                                paste("downloading experiment",i,"of",n_files,"[ attempt",attempt,"]"),
                                paste("downloading experiment",i,"of",n_files))
-        
-        row <- queued_files[i,]
-        filename <- row$filename
-        chr <- row$chromosome
-        id <- row$experiment_id
-        regions <- as.integer(row$regions)
-        
+
         if(row$technique == "chip-seq") {
           
           message(progress_msg)
@@ -314,7 +316,7 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
           } else {
             
             message(progress_msg)
-            no_errors <- download_regions(id,filename,chr,row$format,0,regions,out_dir)
+            no_errors <- download_regions(id,filename,chr,row$format,1,regions,out_dir)
             
           }
           
