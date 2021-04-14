@@ -184,6 +184,10 @@ class DataConfig:
         set_header = False
         with open(norm_csv, 'w', newline='') as csvfile:
             outcsv = writer(csvfile, delimiter=';')
+            found_biosources = []
+            found_genomes = []
+            found_chromosomes = []
+            # first run goes through all files and appends ever chipseq it find
             for file in os.listdir(data):
                 if file.endswith(".csv"):
                     with open(os.path.join(data, file), 'r') as csv:
@@ -197,13 +201,35 @@ class DataConfig:
                         chromosome = header.index("chromosome")
                         filename = header.index("filename")
                         tf = header.index("epigenetic_mark")
+                        technique = header.index("technique")
+                        # find every chipseq that ifts the params and note
+                        # which combinations have been found.
                         for row in csv_reader:
                             if (row[genome] in self.genome and
                                     row[biosource] in self.biosource and
                                     row[tf] in self.epigenetic_mark and
                                     row[chromosome] in self.chromosome and
                                     row[filename].endswith(".bw")):
+
+                                if row[genome] not in found_genomes:
+                                    found_genomes.append(row[genome])
+                                if row[biosource] not in found_biosources:
+                                    found_biosources.append(row[biosource])
+                                if row[chromosome] not in found_chromosomes:
+                                    found_chromosomes.append(row[chromosome])
                                 outcsv.writerow(row)
+                        # go through the file again and check if atac/dnase
+                        # files fitting are found
+                        # reset the csv reader before doing so
+                        csv.seek(0)
+                        for row in csv_reader:
+                            if row[technique] in ["atac-seq", "dnase-seq"]:
+                                if (row[genome] in self.genome and
+                                        row[biosource] in self.biosource and
+                                        row[chromosome] in self.chromosome and
+                                        row[filename].endswith(".bw")):
+                                    outcsv.writerow(row)
+
         logging.info("starting Normalization")
         normalize_all(norm_csv)
         logging.info("finished Normalization")
