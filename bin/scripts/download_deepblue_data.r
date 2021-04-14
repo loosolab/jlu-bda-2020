@@ -22,6 +22,8 @@ parser$add_argument("-m", "--marks", nargs="+", type="character", default=NULL,
                     help="(List of) selected transcription factors to include [default: all]")
 parser$add_argument("--chunk_size", dest="chunks", type="integer", default=10000000L,
                     help="Chunk size for ATAC/DNAse data [default: %(default)s]")
+parser$add_argument("--retry_attempts", dest="retry", type="integer", default=5L,
+                    help="How many times a single download is re-attemped in error cases [default: %(default)s]")
 parser$add_argument("-l", "--check_local_files", dest="local_files", type="character", default=NULL,
                     help="External directory where local files are stored. Files in queue will be copied to the output directory and not downloaded. [default: NULL]")
 
@@ -39,7 +41,7 @@ suppressPackageStartupMessages(
 # remain, the function will call download_regions() for each file (and chunk) to
 # request the corresponding regions from the Deepblue server.
 
-export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,local_dir) {
+export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,retry,local_dir) {
   
   failed_warning <- function(filename,request_id,msg) {
     warning(paste(
@@ -49,7 +51,7 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
   
   # download_regions(experiment id, filename, chromosome, format, chunk start, output directory)
   #
-  # Attempts to download a single file from the Deepblue database. The expected
+  # Attempt to download a single file from the Deepblue database. The expected
   # number of regions is requested beforehand to check for mismatches later. If
   # 0 is returned, the function assumes that no data is available for this range
   # (or chromosome) and skips to the next file. The download is considered
@@ -268,51 +270,76 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
     
     for(i in 1:n_files) {
       
-      progress_msg <- paste("downloading experiment",i,"of",n_files)
+      attempt <- 1
+      chunk_start <- 1
       
-      row <- queued_files[i,]
-      filename <- row$filename
-      chr <- row$chromosome
-      id <- row$experiment_id
-      regions <- as.integer(row$regions)
+      while(attempt <= retry) {
       
-      if(row$technique == "chip-seq") {
+        progress_msg <- ifelse(attempt > 1,
+                               paste("downloading experiment",i,"of",n_files,"[ attempt",attempt,"]"),
+                               paste("downloading experiment",i,"of",n_files))
         
-        message(progress_msg)
-        no_errors <- download_regions(id,filename,chr,row$format,0,regions,out_dir)
+        row <- queued_files[i,]
+        filename <- row$filename
+        chr <- row$chromosome
+        id <- row$experiment_id
+        regions <- as.integer(row$regions)
         
-      } else {
-        
-        genom <- row$genome
-        this_chrom_size <- chrom_sizes[[genom]][id == chr]$name
-        chunks <- seq(1,this_chrom_size,by=chunk_size)
-        n_chunks <- length(chunks)
-        
-        if(n_chunks > 1){
-        
-          for(j in 1:n_chunks) {
-            
-            message(paste(progress_msg,"- chunk",j,"of",n_chunks))
-            chunked_filename <- paste(filename,"chunk",chunks[j],sep="_")
-            no_errors <- download_regions(id,chunked_filename,chr,row$format,chunks[j],regions,out_dir)
-            if(!no_errors) break
-            
-          }
-            
-        } else {
+        if(row$technique == "chip-seq") {
           
           message(progress_msg)
           no_errors <- download_regions(id,filename,chr,row$format,0,regions,out_dir)
+          
+        } else {
+          
+          genom <- row$genome
+          this_chrom_size <- chrom_sizes[[genom]][id == chr]$name
+          chunks <- seq(1,this_chrom_size,by=chunk_size)
+          n_chunks <- length(chunks)
+          
+          if(n_chunks > 1){
+          
+            for(j in chunk_start:n_chunks) {
+              
+              message(paste(progress_msg,"- chunk",j,"of",n_chunks))
+              chunked_filename <- paste(filename,"chunk",chunks[j],sep="_")
+              no_errors <- download_regions(id,chunked_filename,chr,row$format,chunks[j],regions,out_dir)
+              if(!no_errors) {
+                chunk_start <- j
+                break
+              } 
+              
+            }
+              
+          } else {
+            
+            message(progress_msg)
+            no_errors <- download_regions(id,filename,chr,row$format,0,regions,out_dir)
+            
+          }
+          
+        }
+        
+        if(no_errors) {
+          
+          failed_rows[i,] <- NA
+          suppressMessages(
+            deepblue_export_meta_data(id,target.directory=out_dir,file.name=filename)
+          )
+          break
+          
+        } else {
+          
+          attempt <- attempt + 1
           
         }
         
       }
       
-      if(no_errors) {
-        failed_rows[i,] <- NA
-        suppressMessages(
-          deepblue_export_meta_data(id,target.directory=out_dir,file.name=filename)
-        )
+      if(attempt > retry) {
+        stop(paste(
+          filename,": download failed after",retry,"attempts"
+        ))
       }
       
     }
@@ -343,4 +370,4 @@ export_from_csv <- function(csv_file,out_dir,genom,bios,chroms,marks,chunk_size,
   
 }
 
-export_from_csv(args$input,args$output,args$genome,args$biosources,args$chromosomes,args$marks,as.integer(args$chunks),args$local_files)
+export_from_csv(args$input,args$output,args$genome,args$biosources,args$chromosomes,args$marks,as.integer(args$chunks),args$retry,args$local_files)
