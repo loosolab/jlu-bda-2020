@@ -9,6 +9,7 @@ To this end, the TF Analyzer utilizes the [Deepblue Epigenomic Data Server](http
 The latest working build can be cloned from the `dev` branch.
 
 For further information on how this tool works, please check out our [wiki](https://github.com/loosolab/jlu-bda-2020/wiki/).
+If you encounter any errors during a run, please refer to the "[Problems and Solutions](https://github.com/loosolab/jlu-bda-2020/wiki/Problems-and-Solutions)" section of the wiki before opening an Issue.
 
 **Workflow**
 
@@ -71,6 +72,12 @@ Finally, from the repository root, navigate to `visualization/` and execute the 
 $ npm install -g @angular/cli
 
 $ npm install --save-dev @angular-devkit/build-angular
+```
+
+**Note:** To update an existing environment, run
+
+```bash
+$ conda env update -f environment.yml
 ```
 
 ## How to use
@@ -146,55 +153,6 @@ Density Scatter Plot: Shows the mean ATAC/DNase scores on the x-axis and the ChI
 The third output is a table containing the weights of the individual components of the analysis.
 
 The results shown above are highly characteristic of a transcriptional activator due to a high degree of DNA accessibility and a high detection rate of DNA binding sites within the same genomic regions.
-
-If any problems occur in the visualization, please check the web console of your browser.
-
-## Known errors
-
-### generate_pickle.py throws FileNotFoundError
-
-```
-Traceback (most recent call last):
-  [...]
-  File "<path-to-repo>/bin/scripts/generate_pickle.py, line X, in parse
-    tfs = [x for x in os.listdir(os.path.join(data_path, genome, biosource, [...])]
-FileNotFoundError: [Errno 2] No such file or directory: '<output-directory>/data/...'
-```
-
-This usually occurs when the validation and sorting processes were interrupted during a previous run. The download scripts report no new data to be downloaded and the pipeline skips to the generation of dictionaries, but the required files may not have been created yet.
-
-In this case, the `--redo_file_validation` argument can be used to validate the files regardless of how many new files were downloaded.
-
-### "Cannot find module..." when launching the web server
-
-```
-An unhandled exception occured: Cannot find module '@angular-devkit/build-angular/package.json'
-Require stack:
-[...]
-```
-
-To fix this, navigate to the `visualization/` directory and run
-
-```bash
-$ npm install --save-dev @angular-devkit/build-angular
-```
-
-Afterwards, run
-
-```bash
-$ ng serve
-```
-
-in the same folder or
-
-```bash
-$ python ../bin/tf_analyzer.py --visualize
-```
-
-to start the server.
-
-### Ports/address already in use when running web app
-The web application currently listens on ports `4200` and `5000`. Assure that no other program is using them (e.g. with `netstat` on Linux) before running the TF Analyzer.
 
 ## License
 (to be added)
