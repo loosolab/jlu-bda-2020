@@ -57,11 +57,22 @@ def parse(data_path):
                 # test for .bed ending of the file
                 # bed files are read in with the function read_bed and the data is saved in the dictionary tf_bed_dict
                 # the key for tf_bed_dict is the path of the associated bigwig-file
-                for f in files:
-                    if f.lower().endswith('.bed'):
-                        bw = os.path.exists(os.path.join(data_path, genome, biosource, 'chip-seq', tf,f).replace('.bed','.bw'))
+                chip_signal_files=None
+                max_size=0
+                for bw_f in files:
+                    if bw_f.lower().endswith(('.bigwig', '.bigWig', '.bw')):
+                        if not os.path.exists(os.path.join(data_path, genome, biosource, 'chip-seq', tf, bw_f).replace('.bw','.bed')):
+                            if os.stat(os.path.join(data_path, genome, biosource, 'chip-seq', tf,bw_f)).st_size > max_size:
+                                chip_signal_files = os.path.join(data_path, genome, biosource, 'chip-seq', tf,bw_f)
+                                max_size = os.stat(os.path.join(data_path, genome, biosource, 'chip-seq', tf,bw_f)).st_size
+
+                for bed_f in files:
+                    if bed_f.lower().endswith('.bed'):
+                        bw = os.path.join(data_path, genome, biosource, 'chip-seq', tf,bed_f).replace('.bed','.bw')
                         if os.path.exists(bw):
-                            tf_bed_dict[os.path.join(data_path, genome, biosource, 'chip-seq', tf,f).replace('.bed','.bw')] = read_bed(os.path.join(data_path, genome, biosource, 'chip-seq', tf, f))
+                            tf_bed_dict[bw] = read_bed(os.path.join(data_path, genome, biosource, 'chip-seq', tf, bed_f))
+                        elif chip_signal_files:
+                            tf_bed_dict[chip_signal_files] = read_bed(os.path.join(data_path, genome, biosource, 'chip-seq', tf, bed_f))
 
                 # the bed data of the tf is stored in the chip dictionary for the biosource with tf as key
                 if tf_bed_dict:
