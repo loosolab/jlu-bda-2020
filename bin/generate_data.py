@@ -159,7 +159,7 @@ class DataConfig:
         # check if localfiles are used and add parameter if they are
         if self.localfiles is not None:
             args.append("-l")
-            args.extend(self.localfiles)
+            args.append(self.localfiles)
 
         rc = subprocess.call(args)
         if rc == 2:

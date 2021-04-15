@@ -42,6 +42,7 @@ validate_filetype () {
 		;;
 	"CHROMOSOME,START,END,NAME,SCORE,STRAND,SIGNAL_VALUE,P_VALUE,Q_VALUE,PEAK" \
 	| "CHROMOSOME,START,END,NAME,SCORE,STRAND,SIGNAL_VALUE,P_VALUE,Q_VALUE" \
+	| "CHROMOSOME,START,END,NAME,SCORE,STRAND,THICK_START,THICK_END,ITEM_RGB" \
 	| "CHROMOSOME,START,END,NAME,SCORE"\
 	| "CHROMOSOME,START,END,NAME")
 		filetype="bed"
@@ -55,6 +56,10 @@ validate_filetype () {
 		   	   cut_value=$((i+1))
 		   fi
 		done
+
+		if [ $cut_value == 0 ]; then
+			return 2
+		fi
 		;;
 	*)
 		echo "INFO:root:unrecognized file format, $1 can not be used" >> "$logfile"
