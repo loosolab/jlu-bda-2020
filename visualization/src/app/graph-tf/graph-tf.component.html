@@ -1,0 +1,76 @@
+<header>
+    <button mat-raised-button class="my-button" (click)="goBack()">Back</button>
+</header>
+
+
+
+<div *ngFor="let biosource of graph_list_names_bio; let i_bio = index" [attr.data-index]="i_bio">
+    <mat-card class="outer-card">
+        <mat-card-header>
+            <mat-card-title>
+                {{biosource}}
+            </mat-card-title>
+        </mat-card-header>
+        <div *ngFor="let tf of graph_list_names_tf[i_bio]; let a = index" [attr.data-index]="a">
+            <mat-card class="inner-card">
+                <mat-card-header>
+                    <mat-card-title>
+                        {{tf}}
+                    </mat-card-title>
+                </mat-card-header>
+                
+                For the analysis of {{tf}}, the chromosoms: {{graph_list[i_bio][a][2][0][1]}} were used.
+                <br>
+                The width around the summit was {{graph_list[i_bio][a][2][0][2]}}.
+                <br>
+                <br>
+                <div fxLayout="row wrap">
+                <mat-card  class="tripple-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            3D Contour Plot
+                        </mat-card-title>
+                    </mat-card-header>
+                    <img class="img-border" src="assets/img/{{graph_list[i_bio][a][2][0][0]}}" width="550" title="3D Contout Plot">
+                     <br>
+                    This 3D Contour Plot contains the means of the ATAC Scores on the x-axis, the CHIP Scores on the y-axis and the density of these values on the z-axis.
+                </mat-card>
+
+                <mat-card class="tripple-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            Density Scatter with Heatmap
+                        </mat-card-title>
+                    </mat-card-header>
+                <plotly-plot
+                    [data]="graph_list[i_bio][a][0].data" 
+                    [layout]="graph_list[i_bio][a][0].layout"
+                    [useResizeHandler]="true" 
+                    [updateOnlyWithRevision]="true"></plotly-plot>
+                <br>
+                This Scatterplot contains the means of the ATAC Scores on the x-axis and the CHIP Scores on the y-axis.
+                The histograms on both axes are showing the distibution of that scores. 
+                This plot also contains a heatmap, which shows the densities of the used values. (It's maybe needed to zoom in.)
+                </mat-card>
+                <mat-card class="table-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            Table with Means and Weights of the individual components
+                        </mat-card-title>
+                    </mat-card-header>
+                <plotly-plot
+                    [data]="graph_list[i_bio][a][1].data" 
+                    
+                ></plotly-plot>
+                <br>
+                This Table contains the weights of the individual components by the analysis.
+                </mat-card>
+                </div>
+     
+            </mat-card>
+        </div>
+    </mat-card>
+</div>
+
+
+

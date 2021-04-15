@@ -1,6 +1,10 @@
 .vscode
 bin/__pycache__
 bin/scripts/__pycache__
+visualization/node_modules
 logs
 data
 results
+
+# ignore spyder configuration
+.spyproject/

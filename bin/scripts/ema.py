@@ -54,7 +54,26 @@ class EMA:
     
     #Perform Gaussian Mixture Model //NOT THE FINAL VERSION SOME PLUGINS MISSING
     def emAnalyse(self, X_train, n_cgauss):
-        
+        """
+        This Method is used for the final analysing step, using the evaluated 
+        number of components. Therefore Gaussian Mixture Models from sklearn is
+        used. The latter is using a algorythm called EM it fits a given number of 
+        normal distributions into a given distribution.
+
+        Parameters
+        ----------
+        X_train : TYPE: 2D np_array
+            Distribution to be analysed 
+        n_cgauss : TYPE: Integer
+            Number of components for the fit
+
+        Returns
+        -------
+        dataframe : TYPE: pandas Dataframe containing np arrays and floats; 
+            Output of the analyse containing Means, Covariances and weights of each
+            fitted component.
+
+        """
         gmm = GaussianMixture(n_components=n_cgauss)
         gmm.fit(X_train)
         
@@ -73,8 +92,24 @@ class EMA:
         
         return dataframe
     
-    #Method extracts component with the highest weight //(TEST) PROPABLY NOT INCLUDED
+
     def getsignificant(self, dataframe):
+        """
+        PROBABLY NOT NEEDED
+        ==================
+        Method to return the compononent of a fit with the highest weight.
+
+        Parameters
+        ----------
+        dataframe : TYPE: pandas Dataframe
+            Means, Covariances, Weights of every component
+
+        Returns
+        -------
+        feature : TYPE: pandas Dataframe; 
+            Mean, Weight and Weight of the component
+
+        """
         
         array = dataframe.values
         x = 0

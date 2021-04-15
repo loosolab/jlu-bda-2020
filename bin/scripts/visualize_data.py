@@ -11,46 +11,62 @@ from scipy.stats import gaussian_kde
 import numpy as np
 from sklearn.mixture import GaussianMixture
 import os
+import uuid
 
 class VisualizeData:
+    
         
-        def __init__(self,path,tf_id):
+        def __init__(self,path,tf_id, genome, biosource, chromosome):
             """
             Initialize variables and set up directory if necessary
 
             Parameters
             ----------
-            path : TYPE
-                DESCRIPTION.
-            tf_id : TYPE
-                DESCRIPTION.
+            path: TYPE: str
+                Path to results
+            tf_id : TYPE: str
+                ID of the transcription factor
 
             Returns
             -------
             None.
 
             """
-            
-            self.path_plots = (os.path.join(path, 'plots')) + "/" + tf_id
+            self.chromosome = chromosome
+            #genome_path = (os.path.join(path, genome))
+            self.path_plots = (os.path.join(path,'plots',genome ,biosource ,tf_id))
+            path_scripts = os.path.dirname(__file__)
+            path_bin = os.path.split(path_scripts)
+            path_main = os.path.split(path_bin[0])
+            self.path_visualization = os.path.join(path_main[0], "visualization","src","assets","img")
             try:
                 os.makedirs(self.path_plots)
             except:
                 pass
             
-        #Make Density Scatter Heatmap
-        def displayDensityScatter(self,scores_array, tf_id):
+            try:
+                os.makedirs(self.path_visualization)
+            except:
+                pass
+            
+        def makeArray(self, scores_array):
             """
-            Method to illustrate distribution via Density Scatter(Heat-Map)
+            
 
             Parameters
             ----------
-            scores_array : 2D array of vectors
+            scores_array : TYPE: list of float64
+                Distribution
 
             Returns
             -------
-            Path.
+            x : TYPE: nparray of float64
+                Distribution
+            y : TYPE: nparray of float64
+                Distribution
 
             """
+            
             x = []
             y = []
             
@@ -65,6 +81,26 @@ class VisualizeData:
             np.array(x)
             np.array(y)
             
+            return x,y
+        
+        
+        #Make Density Scatter Heatmap
+        def displayDensityScatter(self,scores_array, tf_id):
+            """
+            Method to illustrate distribution via Density Scatter(Heat-Map)
+
+            Parameters
+            ----------
+            scores_array: TYPE: list of float64 vectors
+
+            Returns
+            -------
+            Path: TYPE: str
+                path to plots
+
+            """
+            x,y = VisualizeData.makeArray(self, scores_array)
+            
             # Calculate the point density
             xy = np.vstack([x,y])
             z = gaussian_kde(xy)(xy)
@@ -72,13 +108,13 @@ class VisualizeData:
             fig, ax = plt.subplots()
             ax.scatter(x, y, c=z, s=50, edgecolors='face')
             
-            ax.set(xlim=(0,100), ylim=(0,100))
+            # ax.set(xlim=(0,100), ylim=(0,100))
             plt.xlabel("ATAC")
             plt.ylabel("Chip")
             # plt.colorbar()
             figure_path = self.path_plots + "/DensityScatter_" + tf_id + ".svg"
             plt.savefig(figure_path, format="svg")
-            plt.show()
+            # plt.show()
             
             return self.path_plots
         
@@ -89,30 +125,20 @@ class VisualizeData:
 
             Parameters
             ----------
-            scores_array : 2D array of vectors
-            n_cgauss : number of componets for a Gasussian Mixture Model
+            scores_array: TYPE: list of float64 vectors
+                distribution to plot
+            n_cgauss: TYPE: int
+                number of componets for a Gasussian Mixture Model
             Returns
             -------
             None.
 
             """
-            x = []
-            y = []
             
             gmm = GaussianMixture(n_components=n_cgauss)
             gmm.fit(scores_array)
             
-            for i in range(0, len(scores_array)):
-                v = scores_array[i]
-                xi = v[0]
-                yi = v[1]
-                
-                x.append(xi)
-                y.append(yi)
-            
-            np.array(x)
-            np.array(y)
-            
+            x,y = VisualizeData.makeArray(self, scores_array)
             # Calculate the point density
             xy = np.vstack([x,y])
             z = gaussian_kde(xy)(xy)
@@ -120,12 +146,20 @@ class VisualizeData:
             # Make the plot
             fig = plt.figure()
             ax = fig.gca(projection='3d')
+            ax.set_ylabel('CHIP')
+            ax.set_xlabel('ATAC')
             ax.plot_trisurf(x, y, z, cmap=plt.cm.coolwarm, linewidth=1, antialiased=False)
             # ax.plot_surface(x, y, z, color='b')
-            figure_path = self.path_plots + "/Contour_" + tf_id + ".svg"
-            plt.savefig(figure_path, format="svg")
             
-            plt.show()
+            filename = "Contour_" + tf_id + "_" + str(uuid.uuid4().hex) +".svg"
+            
+            figure_path = os.path.join(self.path_plots, "Contour_" + tf_id + ".svg")
+            plt.savefig(figure_path, format="svg")
+            vil_fig_path = os.path.join(self.path_visualization, filename)
+            plt.savefig(vil_fig_path, format="svg")
+            # plt.show()
+            
+            return z,filename
             
         #Make altitude Plot
         def altitudePlot(self, data, n_cgauss, tf_id):
@@ -135,17 +169,20 @@ class VisualizeData:
 
             Parameters
             ----------
-            data : 2D array of vectors 
-            n_cgauss : number of components 
+            data: TYPE: list of float64 vectors 
+                distribution to plot
+            n_cgauss: TYPE: int
+                number of components 
 
             Returns
             -------
             None.
 
             """
-        
+            dist = data *100
+            
             gmm = GaussianMixture(n_components=n_cgauss)
-            gmm.fit(data)
+            gmm.fit(dist)
             
             X, Y = np.meshgrid(np.linspace(start = -1, stop = 100, num = 100), np.linspace(start = -1, stop = 100, num = 100))
             XY = np.array([X.ravel(), Y.ravel()]).T
@@ -153,9 +190,21 @@ class VisualizeData:
             Z = Z.reshape(100,100)
     
             plt.contour(X,Y,Z)
-            plt.scatter(data[:,0], data[:,1])
+            plt.scatter(dist[:,0], dist[:,1])
             
-            plt.show()
             
             figure_path = self.path_plots + "/Altitude_" + tf_id + ".svg"
-            plt.savefig(figure_path, format="svg")
+            plt.savefig(figure_path, format= "svg")
+            #plt.savefig(/visualization/assests/img/, kwargs)
+            
+            # plt.show()
+            
+#FOR TESTING // EXAMPLE SEE BELOW
+# if __name__ == '__main__':
+    
+#     path = "/home/python/"
+#     tf_id = "1234"
+#     genome = "genom"
+#     biosource = "Dito"
+    
+#     v = VisualizeData(path, tf_id, genome, biosource, "chr1")

@@ -1,0 +1,51 @@
+<mat-card class="inner-card" >
+    <mat-card-header >
+        <mat-card-title style="text-align: center;">
+        <b>Analysis finished!</b>
+        <br>
+        Results for {{biosource_count}} biosources and {{tf_count}} transcription farctor(s) found.
+        <hr>
+    </mat-card-title>
+    
+    </mat-card-header>
+You can select a whole biosource with all its transcription factors by simply clicking at its checkbox.
+If you only want to display the results for a few transcription factors you can just tick these.
+
+<mat-tree [dataSource]="nestedDataSource" [treeControl]="nestedTreeControl" class="example-tree">
+    <mat-tree-node *matTreeNodeDef = "let node">
+        
+        <li>
+            <button mat-icon-button disabled></button>
+            <mat-checkbox class="checkbox-color"
+                
+                [(ngModel)] = "node.checked"
+                (ngModelChange) = "updateAllChecked(node)"
+            >{{node.item}}</mat-checkbox>
+            
+        </li>
+        
+    </mat-tree-node>
+
+    <mat-nested-tree-node *matTreeNodeDef = "let node; when hasNestedChild">
+        <li>
+            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'toggle' + node.item">
+                <mat-icon class="mat-icon-rtl-mirror">
+                    {{nestedTreeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+                </mat-icon>
+            </button>
+            <mat-checkbox 
+                (change) = "checkAll(node)"
+                [(ngModel)] = "node.checked"
+                [indeterminate] = "someChecked(node)"
+            >{{node.item}}</mat-checkbox>
+            <button mat-icon-button disabled></button>
+            <ul [class.example-tree-invisible]="!nestedTreeControl.isExpanded(node)">
+                <ng-container matTreeNodeOutlet></ng-container>
+            </ul>
+        </li>
+    </mat-nested-tree-node>
+</mat-tree>
+
+
+<button mat-raised-button class="card-button" (click)="goToResults()">See Results for selected Sources</button>
+</mat-card>

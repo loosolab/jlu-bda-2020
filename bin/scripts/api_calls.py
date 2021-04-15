@@ -1,86 +1,142 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Feb  4 16:53:09 2021
-
 @author: Spyro
 """
 
 import repository
-
-# =============================================================================
-# def parse_result_csv():
-#     filename = "result.csv"
-#     
-#     biosource_ls=[]
-#     data_ls=[]
-#     all_tf_ls=[]
-#     results = repository.repository().read_csv(filename)
-#    # print(results)
-#    
-#     
-#     for index in results.index:
-#         if results["biosource"][index] not in biosource_ls:
-#             if biosource_ls != []:
-#                 biosource_ls.append(all_tf_ls)
-#                 data_ls.append(biosource_ls)
-#             biosource_ls=[]
-#             biosource_ls.append(results["biosource"][index])
-#         tf_path_ls = []
-#         tf_path_ls.append(results["tf"][index])
-#         tf_path_ls.append(str(index+1))
-#         all_tf_ls.append(tf_path_ls)
-#         #print(results["biosource"][index], results["tf"][index])
-#     biosource_ls.append(all_tf_ls)
-#     data_ls.append(biosource_ls)
-#     full_dict = {"data": data_ls}
-#     return full_dict
-# =============================================================================
+import pandas as pd
+import os
+import csv
+import time
+import calendar
 
 def get_biosource_list_for_tree():
-    filename = "result.csv"
-    results = repository.repository().read_csv(filename)
+    """
+    This function creates a dictionary containing the structure of the tree object that angular needs to display it. 
+    All analyzed biosources and tfs are in this object. The return of this function is a JSON object.
+    """
+    filename = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'results', 'result.csv'))
+    results = repository.Repository().read_csv(filename)
     data_ls = []
-    tree_node = {"item": "", "type":"", "belongsTo":"", "checked": False, "children":[]}
-    inner_tree_node = {"item": "", "type":"", "belongsTo":"", "checked": False, "children":[]}
+    data_dict = {}
+    
+    #create dict containing the biosources and tfs
     for index in results.index:
-        print(index)
-        if results["biosource"][index] not in tree_node["item"]:
-            if tree_node["item"]!= "":
-                data_ls.append(tree_node)
-            tree_node["item"] = results["biosource"][index]
-        inner_tree_node["item"] = results["tf"][index]
-        inner_tree_node["type"] = "tf"
-        inner_tree_node["belongsTo"] = results["biosource"][index]
-        tree_node["children"].append(inner_tree_node)
-        
-        print(inner_tree_node)
-    data_ls.append(tree_node)
-    print()
-    print(tree_node)
-    print(data_ls)
+        biosource = results["biosource"][index] +"_"+ results["genome"][index]
+
+        analyzetime = float(results["time"][index])
+        analyzetime_asc = time.asctime(time.localtime(analyzetime))
+        tf = results["tf"][index] + ", width: "+str(results["width"][index]) +", analyzed: "+ analyzetime_asc
+
+        if biosource not in data_dict:
+            data_dict[biosource]={}
+        if tf not in data_dict[biosource]:
+            data_dict[biosource][tf]=analyzetime
+            #data_dict[biosource].append([tf, analyzetime])
+    
+    #create tree object with the data of the dict
+    for biosource in data_dict:
+        tree_node = {"item": biosource, "type":"", "belongsTo":"", "checked": False, "children":[]}
+        for tf in data_dict[biosource]:
+            inner_tree_node = {"item": tf, "type":str(data_dict[biosource][tf]), "belongsTo":biosource, "checked": False, "children":[]}
+            tree_node["children"].append(inner_tree_node)
+        data_ls.append(tree_node)
     
     return {"data": data_ls}
 
-def getPathList(data):
-    data_ls = []
-    data_dict = {}
-    #print(data)
-    #data =  {"data":[{'item': 'GM12878', 'type': '', 'belongsTo': '', 'checked': False, 'children': [{'item': 'ATF2_ENCFF210HTZ', 'type': 'tf', 'belongsTo': 'GM12878', 'checked': False, 'children': []}, {'item': 'ATF2_ENCFF210HTZ', 'type': 'tf', 'belongsTo': 'GM12878', 'checked': True, 'children': []}, {'item': 'ATF2_ENCFF210HTZ', 'type': 'tf', 'belongsTo': 'GM12878', 'checked': False, 'children': []}, {'item': 'ATF2_ENCFF210HTZ', 'type': 'tf', 'belongsTo': 'GM12878', 'checked': False, 'children': []}, {'item': 'ATF2_ENCFF210HTZ', 'type': 'tf', 'belongsTo': 'GM12878', 'checked': False, 'children': []}, {'item': 'ATF2_ENCFF210HTZ', 'type': 'tf', 'belongsTo': 'GM12878', 'checked': False, 'children': []}, {'item': 'ATF2_ENCFF210HTZ', 'type': 'tf', 'belongsTo': 'GM12878', 'checked': False, 'children': []}]}]}
+
+def getChecked(data):
+    """
+    This function gets the modified tree object back from the visualization and analyzes what biosources and tfs are selected by the user.
+    The return of this function is a dictionary containing the selected biosources and tfs.
+    """
+    whats_checked_bio_tf={}
+    #analyze what was checked by the user, all biosources only checked tfs
     for biosource_obj in data:
-        
         biosource = biosource_obj["item"]
-        #print(biosource)
+        whats_checked_bio_tf[biosource]=[]
+        if biosource_obj["checked"]:
+            for tf_obj in biosource_obj["children"]:
+                whats_checked_bio_tf[biosource].append([tf_obj["item"], tf_obj["type"]])
+        else:
+            for tf_obj in biosource_obj["children"]:
+                if tf_obj["checked"]:
+                    whats_checked_bio_tf[biosource].append([tf_obj["item"], tf_obj["type"]])
+    
+    #remove empty biosources
+    only_checked={}
+    for biosource in whats_checked_bio_tf:
+        if whats_checked_bio_tf[biosource]!=[]:
+            only_checked[biosource]=whats_checked_bio_tf[biosource]
+            
+    return only_checked
+    
 
-        data_dict["biosource"]= biosource
-        data_dict["tf_list"]=[]
-        for tf_obj in biosource_obj["children"]:
-            tempdict = {}
-            tf = tf_obj["item"]
-            tempdict["tf"]= tf
-            tempdict["path"] = "path aus csv"
-            if tf_obj["checked"]:
-                data_dict["tf_list"].append(tempdict)
-        data_ls.append(data_dict)
-    #print(data_dict)
-    return {"data": data_ls}
+def getRawData(checked_data):
+    """
+    This function creates a dictionary containing the biosources, tfs, both CHIP-seq and ATAC-seq scores and the weights from the analysis part for these.
+    This dictionary gets returned as a JSON object.
+    """
+    filename = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'results', 'result.csv'))
+    results = repository.Repository().read_csv(filename)
+    rawdata_dict = {}
+    
+    for biosource in checked_data:
+        rawdata_dict[biosource]={}
+        
+        # extract path, weights and means for each tf from the result.csv
+        for tf_obj in checked_data[biosource]:
+            print(tf_obj)
+            tf_stats_old = tf_obj[0].split(",")
+            tf_stats = tf_stats_old[0]+", "+tf_stats_old[2]
+            path_for_tf = results.loc[(results["time"] == float(tf_obj[1]))]["path"].iloc[0]
+            weights = results.loc[(results["time"] == float(tf_obj[1]))]["weights"].tolist()
+            means = results.loc[(results["time"] == float(tf_obj[1]))]["means"].tolist()
 
+            #stats about the analysis
+            tf = results.loc[(results["time"] == float(tf_obj[1]))]["tf"].iloc[0]
+            width = results.loc[(results["time"] == float(tf_obj[1]))]["width"].iloc[0]
+            chrs = results.loc[(results["time"] == float(tf_obj[1]))]["chr"].iloc[0]
+            path_to_svg = results.loc[(results["time"] == float(tf_obj[1]))]["vis_filename"].iloc[0]
+            new_weights=[]
+            
+            # add all weight into a list and round them
+            for weight in weights:
+                new_weights.append(round(weight,5))
+            
+            atac_ls= []
+            chip_ls=[]
+            
+            # add means into a list and round them
+            for mean in means:
+                atac_ls.append(round(mean[0],5))
+                chip_ls.append(round(mean[1],5))
+                 
+            #secure that path exists
+            if os.path.exists(path_for_tf):
+                csvfile = open(os.path.join(path_for_tf,tf+".csv")) 
+                data = list(csv.reader(csvfile, delimiter=","))
+                csvfile.close()
+                x = []
+                y = []
+                
+                # add CHIP-seq and ATAC-seq scores as x and y coordinates to lists
+                for row in data:
+                    x.append(round(float(row[0]),3))
+                    y.append(round(float(row[1]),3))
+                
+                # add all data for each tf into the dictionary
+                rawdata_dict[biosource][tf_stats]={}
+                rawdata_dict[biosource][tf_stats]["rawData"]=[]
+                rawdata_dict[biosource][tf_stats]["analysisData"]=[]
+                rawdata_dict[biosource][tf_stats]["analysisData"].append(atac_ls)
+                rawdata_dict[biosource][tf_stats]["analysisData"].append(chip_ls)
+                rawdata_dict[biosource][tf_stats]["analysisData"].append(new_weights)
+                rawdata_dict[biosource][tf_stats]["rawData"].append([x, y])
+                rawdata_dict[biosource][tf_stats]["stats"]=[]
+                rawdata_dict[biosource][tf_stats]["stats"].append([str(path_to_svg),str(chrs), str(width)])
+                
+
+
+    return {"data": rawdata_dict}

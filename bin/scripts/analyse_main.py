@@ -9,19 +9,19 @@ from scripts.repository import Repository
 from scripts.components_fit import GmFit
 from scripts.visualize_data import VisualizeData as VD
 from scripts.ema import EMA
-import matplotlib.pyplot as plt
+from scripts.modify_csv import modifyCSV 
 import pandas as pd
 import numpy as np
-import sys
 import os
+import time
 
-class Main:
+class TF_analyser:
     """
     Main Class of the Analyse Part. This class is to call the whole pipe of this
     part.
     """
     
-    def __init__(self):
+    def __init__(self, n_comps, genome, width, path, chromosome):
         """
         Initiation of Variables
 
@@ -30,107 +30,120 @@ class Main:
         None.
 
         """
+        self.chr = chromosome
+        self.path_results = path
+            
+        self.genome = genome
+        self.width = width
+        self.evaluate_n = True
+        self.eval_size = 7
+        
+        if n_comps:
+            
+            self.evaluate_n = False
+            self.n_components = n_comps
+            
         path_scripts = os.path.dirname(__file__)
         path_bin = os.path.split(path_scripts)
         path_main = os.path.split(path_bin[0])
-        self.path_results = os.path.join(path_main[0], 'results')
-            
-        self.evaluate_n = True
-        self.eval_size = 7
-            
-            
-    # def progress(self, count, total, suffix=''):
-    #     """
-    #     Method to Display a progress bar
+        self.path_result_csv = os.path.join(path_main[0], 'results', 'result.csv')
         
-    #     Parameters
-    #     ----------
-    #     count : actual status by counted Tfs
-    #     total : total Tfs
-    #     suffix : TYPE, optional
-    #         DESCRIPTION. The default is ''.
-
-    #     Returns
-    #     -------
-    #     None.
-
-    #     """
+        if path:
+            
+            self.path_results = os.path.join(path, 'results')
+        else:
+            
+            self.path_results = os.path.join(path_main[0], 'results')
         
-    #     bar_len = 60
-    #     filled_len = int(round(bar_len * count / float(total)))
-    
-    #     percents = round(100.0 * count / float(total), 1)
-    #     bar = '=' * filled_len + '-' * (bar_len - filled_len)
-    
-    #     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
-    #     sys.stdout.flush()
         
     def mainloop(self, data):
         """
-        Main method of the analyse part. Here the Transcription Factors of the pickle File 
-        is analysed and a dataframe of the results is created. Also the distributions of the 
+        Main method of the analyse part. Here the Transcription Factors 
+        are analysed and a dataframe of the results is created. Also the distributions of the 
         ATAC and CHIP data is plotted and safed as png.
 
         Parameters
         ----------
-        path : Input Path
+        data: TYPE: mutiple dicts in dicts containing the actual scores in the last one
+            Data to be analysed
 
         Returns
         -------
-        resultframe : result dataframe
+        resultframe: TYPE: pandas Dataframe
+            result dataframe
 
         """
-        
+
         # total = Input().number_of_chr(data)
         
-        resultframe =pd.DataFrame(columns=['biosource','tf','means','covariances', 'weights']) 
-
-        # i = 0
+        resultframe =pd.DataFrame(columns=['genome','width','mode','chr','biosource','tf','means','covariances', 'weights']) 
         
+        # i = 0
+        # loop all biosources
+        print("analyse_main.py: unpacking")
         for biosource, b_value in data.items():
-            
+            print("unpacking: " + biosource)
+            #loop all transcription factors
             for tf, tf_value in b_value.items():
                 
                 print('analysing: '+ tf)
                 
                 scoresarray = []
-                
+                #combine all scores of the chromosomes into vector-format list
                 for chromosome in tf_value.values():
                 
                     for array in chromosome:
     
-                            scoresarray.append([array[-1], array[-2]])
-            
-                # Main().progress(i, total, '')
+                            scoresarray.append([array[-1], array[-2]])                
                 
+               # scaled_scores = TF_analyser.scale(self, scoresarray)
+                distribution = np.array(scoresarray)
                 
-                scaled_scores = Main().scale(scoresarray)
-                distribution = np.array(scaled_scores)
+                mode = 'manual'
                 
                 if self.evaluate_n == True:
                     
-                    all_diffs = GmFit().getDifference(distribution, self.eval_size)
-                    n_components = GmFit().evaluate(all_diffs)
-                    plt.plot(all_diffs)
+                    mode = 'auto'
+                    print("mode auto: number of components is evaluated (components_fit.py)")
+                    #automated number of components evaluation  
+                    all_diffs = GmFit.getDifference(self, distribution, self.eval_size)
+                    self.n_components = GmFit.evaluate(self, all_diffs)
+                    #plt.plot(all_diffs)
                 
-                single_result = EMA().emAnalyse(distribution, n_components)
-                
+                single_result = EMA().emAnalyse(distribution, self.n_components)
+               
                 single_result.insert(0,'tf',tf)
+                single_result.insert(0,'chr', ", ".join(self.chr))
                 single_result.insert(0,'biosource',biosource)
+                single_result.insert(0, 'mode', mode)
+                single_result.insert(0,'width', self.width)
+                single_result.insert(0,'genome', self.genome)
                 
-                
-                v= VD(self.path_results, tf)
+                #visualization and saving plots 
+                v= VD(self.path_results, tf, self.genome, biosource, self.chr)
                 path = v.displayDensityScatter(distribution, tf)
                 
-                v.altitudePlot(distribution, n_components, tf)
-                v.contourPlot(distribution, n_components, tf)
-                single_result.insert(5, 'path', path)
+                v.altitudePlot(distribution, self.n_components, tf)
+                z,filename = v.contourPlot(distribution, self.n_components, tf)
+            
+                #Add z axis to scoresarray:
+                for i in range(0,len(z)):
+                    scoresarray[i].append(z[i])
+                    
+                #save data
+                np.savetxt(path + '/' + tf + '.csv', scoresarray, delimiter=',')
+                
+                single_result.insert(9, 'path', path)
+                single_result.insert(10, 'time', time.time())
+                single_result.insert(11, 'vis_filename', filename)
                 
                 resultframe = pd.concat([resultframe, single_result])
-                
+
+                parameters = [self.genome, self.width, mode, ", ".join(self.chr), biosource, tf]
+                modifyCSV(self.path_result_csv).compare(parameters)
                 print (tf + "    Done")
-                # i += 1
-                # Main().progress(i, total, '')
+                
+
         #Save resultframe
         Repository().save_csv(resultframe)
             
@@ -138,15 +151,20 @@ class Main:
     
     def scale(self, scoresarray):
         """
+        NOT USED IN THE FINAL VERSION
+        =============================
+        
         Method to scale the data to values from 0 to 100 
 
         Parameters
         ----------
-        scoresarray : 2D array of vectors
+        scoresarray: TYPE: list of float64 vectors
+            distribution
 
         Returns
         -------
-        scaled : 2D array of vectors
+        scaled : TYPE: list of float64 vectors
+            scaled distribution
 
         """
         
@@ -175,14 +193,18 @@ class Main:
             
         return scaled
             
-        
-if __name__ == '__main__':
+#FOR TESTING // EXAMPLE SEE BELOW
 
-    data = Repository().inputHandler(path='/home/jan/python-workspace/angewendete_daten_analyse/testsets/calculated_data_3.pickle')
-    resultframe = Main().mainloop(data)
-    # dirname = os.path.dirname(__file__)
-    # resultframe.to_csv(dirname + '/result.csv', index = False, decimal=(','))
-    print(resultframe)
+# if __name__ == '__main__':
+
+#     data = 
+#     path_scripts = os.path.dirname(__file__)
+#     path_bin = os.path.split(path_scripts)
+#     path_main = os.path.split(path_bin[0])
+#     path = os.path.join(path_main[0], 'results')
+    
+#     resultframe = TF_analyser(None, "Genome", "width", path, "chr1").mainloop(data)
+#     print(resultframe)
         
                 
                 
