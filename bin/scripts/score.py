@@ -7,7 +7,7 @@ Dies ist eine temporäre Skriptdatei.
 import pickle
 import pyBigWig
 import os
-
+import logging
 
 def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
     """
@@ -15,6 +15,7 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
     This area needs to be specified at first, with the help of the CHIP-seq pickle and the value "w".
     """
 
+    logging.info('starting calculation of score')
     print('------Calculating score------')
 
     # path to pickledata
@@ -30,11 +31,17 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
         # load dictionarys contaning paths to chip and atac bigwig files
         try:
             atacdict = pickle.load(open(os.path.join(picklepath, genom, 'atac-seq', biosource + ".pickle"), "rb"))
-            chipdict = pickle.load(open(os.path.join(picklepath, genom, 'chip-seq', biosource + ".pickle"), "rb"))
         except FileNotFoundError:
             atacdict = None
+            logging.warning('There is no ATAC/DNase-seq data for biosource ' + biosource)
+            print('-There is no ATAC/DNase-seq data for biosource ' + biosource)
+
+        try:
+            chipdict = pickle.load(open(os.path.join(picklepath, genom, 'chip-seq', biosource + ".pickle"), "rb"))
+        except FileNotFoundError:
             chipdict = None
-            print('-There is no data for biosource ' + biosource)
+            logging.warning('There is no ChIP-seq data for biosource ' + biosource)
+            print('-There is no ChIP-seq data for biosource ' + biosource)
 
         if atacdict and chipdict:
             # generate key for biosource if it does not exist
@@ -53,7 +60,7 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
                     count = 1
                     for file in chipdict[tf]:
 
-                        print('Calculating file {} of {}'.format(count,len(chipdict[tf])))
+                        print('Calculating file {} of {}'.format(count, len(chipdict[tf])))
                         count += 1
 
                         try:
@@ -62,7 +69,7 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
 
                             for chromosom in chipdict[tf][file]:
 
-                                # test if chromososme was requested by user
+                                # test if chromosome was requested by user
                                 if chromosom in chr_list:
 
                                     # generate key for chromosome if it does not exist
@@ -95,6 +102,7 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
                                             if calculationls not in calculateddict[biosource][tf][chromosom]:
                                                 calculateddict[biosource][tf][chromosom].append(calculationls)
                         except RuntimeError:
+                            logging.warning('Unable to open file ' + str(file))
                             print('Unable to open file ' + file)
 
                     print('Finished analysis of ', tf)
@@ -111,6 +119,8 @@ def findarea(width, genom, biosource_ls, tf_ls, chr_list, outpath):
             else:
                 del calculateddict[biosource]
             print("Finished analysis of", biosource)
+
+    logging.info('finished calculation of score')
     return calculateddict
 
 

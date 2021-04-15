@@ -12,6 +12,7 @@ from tabulate import tabulate
 import numpy as np
 import regex
 import sys
+import logging
 
 
 def main():
@@ -134,17 +135,23 @@ def main():
         # logging
         logfile = scripts.setup_logging.setup(args.output_path)
 
+        print('-------------------------\n')
+        print('The Logfile can be found at ' + logfile + '\n')
+        print('-------------------------\n')
+
         if args.offline:
+            logging.info('Running in offline mode')
             if lt is not None:
                 genome_choices = list(set(lt['genome']))
                 biosource_choices = list(set(lt['biosource']))
                 tf_choices = list(set(lt['epigenetic_mark']))
                 chromosomes = lt.groupby(["genome"]).chromosome.unique().to_dict()
             else:
+                logging.error('There is currently no downloaded data in your specified path.')
                 sys.exit('There is currently no downloaded data in your specified path.')
         else:
             # call deepblue to get all available genomes, biosources and tfs
-            url = "http://deepblue.mpi-inf.mpg.de/xmlrpc"
+            url = "https://deepblue.mpi-inf.mpg.de/xmlrpc"
             server = xc.Server(url, encoding='UTF-8', allow_none=True)
             user_key = "anonymous_key"
 
@@ -168,7 +175,11 @@ def main():
                     chrom = [x[0] for x in server.chromosomes(genome, user_key)[1]]
                     chromosomes[genome] = natsorted(chrom)
             except Exception as e:
-                sys.exit(str(e) + ': No connection could be established to deepblue. If you want to run an analysis with '
+                logging.error(
+                    'No connection could be established to deepblue. If you want to run an analysis with already '
+                    'downloaded data, please call the program with the parameter \'--offline\'.')
+                sys.exit(
+                    str(e) + ': No connection could be established to deepblue. If you want to run an analysis with '
                              'already downloaded data, please call the program with the parameter \'--offline\'.')
 
         # print a list of all genomes and their associated chromosomes
@@ -247,19 +258,24 @@ def main():
             # if yes and exist is False, notify that there is no data for the submitted combination of genome, biosource
             # and transcription factor and exit the program
             if scores:
+                logging.info('starting analysis')
                 scripts.analyse_main.TF_analyser(n_comps=args.component_size, genome=args.genome, width=args.width,
                                                  path=args.output_path,
                                                  chromosome='all' if all_chroms else args.chromosome).mainloop(
                     data=scores)
+                logging.info('finished analysis')
 
+                logging.info('starting visualization')
                 subprocess.Popen(['python',
                                   os.path.join(os.path.dirname(__file__), 'scripts', 'visualization_app_api_start.py')])
                 subprocess.call(['ng', 'serve'],
                                 cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'visualization')))
 
             else:
+                logging.error(
+                    'There is no data for your entered combination of genome, biosource and transcription factor')
                 raise Exception(
-                    'there is no data for your entered combination of genome, biosource and transcription factor')
+                    'There is no data for your entered combination of genome, biosource and transcription factor')
 
 
 if __name__ == '__main__':
