@@ -44,7 +44,7 @@ validate_filetype () {
 		done
 		;;
 	*)
-		echo "unrecognized file format, $1 can not be used" >> "$logfile"
+		echo "INFO:root:unrecognized file format, $1 can not be used" >> "$logfile"
 		return 2
 		;;
 	esac
@@ -89,14 +89,14 @@ convert_file() {
 			bedGraphToBigWig "$newfile" \
 				"$5/$4.chrom.sizes" "$out_path/$new_filename" &>/dev/null
 			if [ $? == 255 ]; then
-				echo "overlap found in $2" >> "$logfile"
+				echo "INFO:root:overlap found in $2" >> "$logfile"
 				bedRemoveOverlap "$newfile" "$6/tempfile"
 				mv "$6/tempfile" "$newfile"
 				bedGraphToBigWig "$newfile" \
 				"$5/$4.chrom.sizes" "$out_path/$new_filename"
 			fi
 		else
-				echo "unexpected file: $2 $file_extension" >> "$logfile"
+				echo "ERROR:root:unexpected file: $2 $file_extension" >> "$logfile"
 		fi
 	fi
 }
@@ -117,7 +117,7 @@ merge_chunks() {
 		if [[ $file == *"chunk"* ]]; then
 			if [[ $outfile != $folder/$filename ]]; then
 				outfile="$folder/$filename"
-				echo "chunks merged into: $outfile" >> "$logfile"
+				echo "INFO:root:chunks merged into: $outfile" >> "$logfile"
 				head -n1 "$file" > "$outfile"
 			fi
 			outfiles+=("$outfile")
