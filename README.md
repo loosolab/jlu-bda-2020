@@ -17,12 +17,12 @@ If you encounter any errors during a run, please refer to the "[Problems and Sol
  2. Convert, normalize and sort downloaded data if necessary
  3. Calculate relations between ChIP and ATAC/DNase data for each TF and save results as CSV files
  4. Visualize data through a self-hosted web application
- 
+
 ## Requirements
 
  - Python 3 and pip
  - [Conda](https://docs.conda.io/projects/conda/en/latest/index.html)
- 
+
 ## Setup
 First, we need to create a conda environment with the following dependencies:
 
@@ -60,11 +60,11 @@ dependencies:
 $ conda env create -f environment.yml
 ```
 
-The newly created environment must then be activated before running the pipeline: 
+The newly created environment must then be activated before running the pipeline:
 
 ```bash
 $ conda activate tf_analyzer
-``` 
+```
 
 Finally, from the repository root, navigate to `visualization/` and execute the following commands:
 
@@ -127,7 +127,7 @@ The results can be found in the `plots` folder inside the output directory. To v
 ```bash
 $ ssh -L 4200:localhost:4200 -L 5000:localhost:5000 user@server
 ```
- 
+
 ## Example case
 
 ```bash
@@ -153,4 +153,4 @@ The third output is a table containing the weights of the individual components 
 The results shown above are highly characteristic of a transcriptional activator due to a high degree of DNA accessibility and a high detection rate of DNA binding sites within the same genomic regions.
 
 ## License
-(to be added)
+This project is licensed under the [MIT license](https://github.com/loosolab/jlu-bda-2020/blob/main/LICENSE).
