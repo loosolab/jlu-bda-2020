@@ -209,13 +209,11 @@ do
 	filepath="$out_path/$new_filename"
 	# add .bw file
 	echo "$experiment_id;$genome;$biosource;$technique;$epigenetic_mark;\
-$chromosome;$new_filename;$data_type;$filepath;$format;$remaining"\
-	>> "$new_link"
+$chromosome;$new_filename;$data_type;$filepath;$format;$remaining" >> "$new_link"
 	# add .bed file
 	new_filename="${new_filename%.*}.bed"
 	echo "$experiment_id;$genome;$biosource;$technique;$epigenetic_mark;\
-$chromosome;$new_filename;$data_type;$filepath;$format;$remaining"\
-	>> "$new_link"
+$chromosome;$new_filename;$data_type;$filepath;$format;$remaining" >> "$new_link"
 
 	count=$((count+1))
 	if ! (( count % 5 )) ; then
