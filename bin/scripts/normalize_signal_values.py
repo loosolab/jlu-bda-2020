@@ -203,7 +203,7 @@ def log_scale_file(file_path, column_names=None):
                         starts = [interval[0] for interval in intervals]
                         ends = [interval[1] for interval in intervals]
 
-                        signal_values = [interval[2] if interval[2] != 0 else 1
+                        signal_values = [1 if interval[2] <= 0 else interval[2]
                                          for interval in intervals]
                         log_values = numpy.log(signal_values)
                         bw_log.addEntries(chromosomes, starts, ends=ends,
