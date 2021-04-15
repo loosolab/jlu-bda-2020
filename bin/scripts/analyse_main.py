@@ -99,8 +99,7 @@ class TF_analyser:
             result dataframe
 
         """
-        
-        
+
         # total = Input().number_of_chr(data)
         
         resultframe =pd.DataFrame(columns=['genome','width','mode','chr','biosource','tf','means','covariances', 'weights']) 

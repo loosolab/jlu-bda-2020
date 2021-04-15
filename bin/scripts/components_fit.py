@@ -405,6 +405,7 @@ if __name__ == '__main__':
     distribution = SC().loadData(path='/home/jan/python-workspace/angewendete_daten_analyse/testsets/calculated_data_3.pickle')
 
     all_diffs = GmFit().getDifference(distribution, n_components)
+    x = GmFit().evaluate(all_diffs)
     # k = GmFit().getknee(all_diffs)
     # print("knee: ")
     # print(k)

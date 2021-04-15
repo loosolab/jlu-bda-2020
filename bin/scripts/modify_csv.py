@@ -89,7 +89,7 @@ class modifyCSV:
 
 if __name__ == '__main__':
 
-    parameters = ["Genome",	"width","auto","chr1","GM12878","ARID3A_ENCFF003VDB"]
+    parameters = "hg19",	"50", "auto", "chr1", "kidney","ar"
     
     modifyCSV("/home/jan/python-workspace/jlu-bda-2020/results/result.csv").compare(parameters)
     #df = pd.DataFrame(data=numpy_data, columns=['genome','width','mode','chr','biosource','tf'])

@@ -108,7 +108,7 @@ class VisualizeData:
             fig, ax = plt.subplots()
             ax.scatter(x, y, c=z, s=50, edgecolors='face')
             
-            ax.set(xlim=(0,100), ylim=(0,100))
+            # ax.set(xlim=(0,100), ylim=(0,100))
             plt.xlabel("ATAC")
             plt.ylabel("Chip")
             # plt.colorbar()
@@ -179,9 +179,10 @@ class VisualizeData:
             None.
 
             """
-        
+            dist = data *100
+            
             gmm = GaussianMixture(n_components=n_cgauss)
-            gmm.fit(data)
+            gmm.fit(dist)
             
             X, Y = np.meshgrid(np.linspace(start = -1, stop = 100, num = 100), np.linspace(start = -1, stop = 100, num = 100))
             XY = np.array([X.ravel(), Y.ravel()]).T
@@ -189,7 +190,7 @@ class VisualizeData:
             Z = Z.reshape(100,100)
     
             plt.contour(X,Y,Z)
-            plt.scatter(data[:,0], data[:,1])
+            plt.scatter(dist[:,0], dist[:,1])
             
             
             figure_path = self.path_plots + "/Altitude_" + tf_id + ".svg"
