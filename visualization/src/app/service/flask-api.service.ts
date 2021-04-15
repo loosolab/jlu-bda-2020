@@ -17,7 +17,7 @@ export class FlaskApiService {
   public Tree_Data: BehaviorSubject<TFItemNode[]> = new BehaviorSubject<TFItemNode[]>([])
   public Viszalization_Data = new BehaviorSubject(Array)
   public RawGraphData = new BehaviorSubject(Array)
-  private api_adress = "ttp://localhost:5000/"
+  private api_adress = "http://localhost:5000/"
   constructor() { }
 
   getTreeDataFromAPI() {
