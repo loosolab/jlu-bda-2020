@@ -30,6 +30,7 @@ from scripts.merge_reads import merge_all
 from scripts.generate_pickle import parse
 from scripts.normalize_signal_values import normalize_all
 from scripts.setup_logging import setup
+import pandas as pd
 
 
 class DataConfig:
@@ -95,6 +96,13 @@ class DataConfig:
             self.merge_forward_reverse()
             self.sort_files()
             self.generate_dictionaries()
+
+            # This code should not be needed, but somehow somewhere duplicate
+            # entries can be added to the linking table...somehow
+            csv = pd.read_csv(os.path.join(self.outpath, "data", self.csvname))
+            csv.drop_duplicates(keep=False, inplace=True)
+            csv.to_csv(os.path.join(self.outpath, "data", self.csvname))
+
         else:
             print(
                 "No new data was downloaded, skipping validation, merging and sorting.")
