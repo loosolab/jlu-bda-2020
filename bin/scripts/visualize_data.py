@@ -199,10 +199,12 @@ class VisualizeData:
             
             # plt.show()
             
-if __name__ == '__main__':
-    path = "/home/python/"
-    tf_id = "1234"
-    genome = "genom"
-    biosource = "Dito"
+#FOR TESTING // EXAMPLE SEE BELOW
+# if __name__ == '__main__':
     
-    v = VisualizeData(path, tf_id, genome, biosource, "chr1")
+#     path = "/home/python/"
+#     tf_id = "1234"
+#     genome = "genom"
+#     biosource = "Dito"
+    
+#     v = VisualizeData(path, tf_id, genome, biosource, "chr1")

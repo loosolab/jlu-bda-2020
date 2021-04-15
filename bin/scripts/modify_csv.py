@@ -48,13 +48,8 @@ class modifyCSV:
             
             ori = rp().read_csv(self.path)
         
-            # data = pd.DataFrame()
             data = ori.copy()
             
-            #Testing:
-            # data = pd.DataFrame( columns=['genome','width','mode','chr','biosource','tf'])
-            # data_length = len(df)
-            # data.loc[df_length] = ["genome", "width", "auto", "chr1", "Bär", "tf"]
             
             data.pop('means')
             data.pop('covariances')
@@ -87,9 +82,10 @@ class modifyCSV:
             
             pass
 
-if __name__ == '__main__':
-
-    parameters = "hg19",	"50", "auto", "chr1", "kidney","ar"
+#FOR TESTING // EXAMPLE SEE BELOW
+# if __name__ == '__main__':
     
-    modifyCSV("/home/jan/python-workspace/jlu-bda-2020/results/result.csv").compare(parameters)
-    #df = pd.DataFrame(data=numpy_data, columns=['genome','width','mode','chr','biosource','tf'])
+#     parameters = "hg19",	"50", "auto", "chr1", "kidney","ar"
+    
+#     modifyCSV(".../python-workspace/jlu-bda-2020/results/result.csv").compare(parameters)
+#     #df = pd.DataFrame(data=numpy_data, columns=['genome','width','mode','chr','biosource','tf'])

@@ -303,116 +303,20 @@ class GmFit:
         return n
         
 
-if __name__ == '__main__':
-    """
-    Testing the script 
-    """
-    
-    # from TestdataMaker import Testdata_Maker
+#FOR TESTING // EXAMPLE SEE BELOW
+# if __name__ == '__main__':
+#     """
+#     Testing the script 
+#     """
 
-    n_components = 7
-    # #Parameters for the first gaussian distribution:
-    # location_ATAC = 50
-    # location_CHIP = 50
-    # gain_ATAC = 10
-    # gain_CHIP = 30
-    # size = 5000 
-    # rotation = 45
+#     n_components = 7
     
-    # #Parameters for the second gaussian distribution:
-    # secondDistribution = True
-    # location_ATAC_2 = 70
-    # gain_ATAC_2 = 10
-    # location_CHIP_2 = 70
-    # gain_CHIP_2 = 10
-    # size_2 = 3000  
-    # rotation_2 = 0    
-    
-    # #Parameters for Gaussian Noise:
-    # gaussian_Noise = True
-    # noise_loop = 50
-    # location_ATAC_Noise = 50
-    # location_CHIP_Noise = 50
-    # standard_deviation_loc_ATAC = 25
-    # standard_deviation_loc_CHIP = 25
-    # gain_ATAC_Noise = 10
-    # gain_CHIP_Noise = 10
-    # standard_deviation_gain_ATAC = 1
-    # standard_deviation_gain_CHIP = 1
-    # size_GaussianNoise = 200
-    # standard_deviation_size_GaussianNoise = 100
-    
-    # #Parameters for linear noise:
-    # noise = True
-    # size_noise = 1000
+#     distribution = 
 
-    # #Index of the parameter list
-    # # 0. loop
-    # # 1. location_ATAC
-    # # 2. stda_loc_ATAC
-    # # 3. gain_ATAC
-    # # 4. stda_gain_ATAC
-    # # 5. location_CHIP
-    # # 6. stda_loc_CHIP
-    # # 7. gain_CHIP
-    # # 8. stda_gain_CHIP
-    # # 9. size
-    # # 10.stda_size
-    
-    # param = []
-    # param.append(noise_loop)
-    # param.append(location_ATAC_Noise)
-    # param.append(standard_deviation_loc_ATAC)
-    # param.append(gain_ATAC_Noise)
-    # param.append(standard_deviation_gain_ATAC)    
-    # param.append(location_CHIP_Noise)
-    # param.append(standard_deviation_loc_CHIP)
-    # param.append(gain_CHIP_Noise)
-    # param.append(standard_deviation_gain_CHIP)
-    # param.append(size_GaussianNoise)
-    # param.append(standard_deviation_size_GaussianNoise)
-
-    
-    # #Testing:
-    
-    
-    # #Execute:
-    # scores_array = Testdata_Maker().getScoresArray(location_ATAC, location_CHIP, gain_ATAC, gain_CHIP, size)
-
-    # rotated = Testdata_Maker().rotate(scores_array, location_ATAC, location_CHIP, rotation)  
-    # scores_array = rotated
-    
-    # if secondDistribution:
-        
-    #     scores_array_2 = Testdata_Maker().getScoresArray(location_ATAC_2, location_CHIP_2, gain_ATAC_2, gain_CHIP_2, size_2)
-
-    #     rotated = Testdata_Maker().rotate(scores_array_2, location_ATAC_2, location_CHIP_2, rotation_2)  
-    #     scores_array.extend(rotated)
-    
-    # if noise:
-    #     randomized = Testdata_Maker().randomeNoise(size_noise, scores_array)
-    #     scores_array = randomized
-    
-    # if gaussian_Noise:
-    #     g_noise = Testdata_Maker().gaussianNoise(param)
-    #     scores_array.extend(g_noise)
-     
-    # filtered = Testdata_Maker().cutoff(scores_array)
-    # distribution = filtered
-    
-    from interface_scoring import LoadPickle as SC
-    
-    distribution = SC().loadData(path='/home/jan/python-workspace/angewendete_daten_analyse/testsets/calculated_data_3.pickle')
-
-    all_diffs = GmFit().getDifference(distribution, n_components)
-    x = GmFit().evaluate(all_diffs)
-    # k = GmFit().getknee(all_diffs)
-    # print("knee: ")
-    # print(k)
-    count = GmFit().evaluate(all_diffs)
-    plt.pyplot.plot(all_diffs)
-    dif = np.diff(all_diffs)
-    difdif = np.diff(dif)
-    print(count)
-    #plt.pyplot.plot(all_diffs)
-        
+#     all_diffs = GmFit().getDifference(distribution, n_components)
+#     x = GmFit().evaluate(all_diffs)
+#     # k = GmFit().getknee(all_diffs)
+#     # print("knee: ")
+#     # print(k)
+#     count = GmFit().evaluate(all_diffs)
+#     print(count)

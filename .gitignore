@@ -5,3 +5,6 @@ visualization/node_modules
 logs
 data
 results
+
+# ignore spyder configuration
+.spyproject/

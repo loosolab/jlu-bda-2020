@@ -55,32 +55,6 @@ class TF_analyser:
             
             self.path_results = os.path.join(path_main[0], 'results')
         
-            
-    # def progress(self, count, total, suffix=''):
-    #     """
-    #     Method to Display a progress bar
-        
-    #     Parameters
-    #     ----------
-    #     count : actual status by counted Tfs
-    #     total : total Tfs
-    #     suffix : TYPE, optional
-    #         DESCRIPTION. The default is ''.
-
-    #     Returns
-    #     -------
-    #     None.
-
-    #     """
-        
-    #     bar_len = 60
-    #     filled_len = int(round(bar_len * count / float(total)))
-    
-    #     percents = round(100.0 * count / float(total), 1)
-    #     bar = '=' * filled_len + '-' * (bar_len - filled_len)
-    
-    #     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
-    #     sys.stdout.flush()
         
     def mainloop(self, data):
         """
@@ -120,11 +94,7 @@ class TF_analyser:
                 
                     for array in chromosome:
     
-                            scoresarray.append([array[-1], array[-2]])
-            
-                
-                # Main().progress(i, total, '')
-                
+                            scoresarray.append([array[-1], array[-2]])                
                 
                # scaled_scores = TF_analyser.scale(self, scoresarray)
                 distribution = np.array(scoresarray)
@@ -168,8 +138,7 @@ class TF_analyser:
                 single_result.insert(11, 'vis_filename', filename)
                 
                 resultframe = pd.concat([resultframe, single_result])
-                # i += 1
-                # Main().progress(i, total, '')
+
                 parameters = [self.genome, self.width, mode, ", ".join(self.chr), biosource, tf]
                 modifyCSV(self.path_result_csv).compare(parameters)
                 print (tf + "    Done")
@@ -224,19 +193,18 @@ class TF_analyser:
             
         return scaled
             
-        
-if __name__ == '__main__':
+#FOR TESTING // EXAMPLE SEE BELOW
 
-    data = Repository().inputHandler(path='/home/jan/python-workspace/angewendete_daten_analyse/testsets/calculated_data_3.pickle')
-    path_scripts = os.path.dirname(__file__)
-    path_bin = os.path.split(path_scripts)
-    path_main = os.path.split(path_bin[0])
-    path = os.path.join(path_main[0], 'results')
+# if __name__ == '__main__':
+
+#     data = 
+#     path_scripts = os.path.dirname(__file__)
+#     path_bin = os.path.split(path_scripts)
+#     path_main = os.path.split(path_bin[0])
+#     path = os.path.join(path_main[0], 'results')
     
-    resultframe = TF_analyser(None, "Genome", "width", path, "chr1").mainloop(data)
-    # dirname = os.path.dirname(__file__)
-    # resultframe.to_csv(dirname + '/result.csv', index = False, decimal=(','))
-    print(resultframe)
+#     resultframe = TF_analyser(None, "Genome", "width", path, "chr1").mainloop(data)
+#     print(resultframe)
         
                 
                 
