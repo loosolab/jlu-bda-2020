@@ -100,7 +100,7 @@ class DataConfig:
             # This code should not be needed, but somehow somewhere duplicate
             # entries can be added to the linking table...somehow
             csv = pd.read_csv(os.path.join(self.outpath, "data", self.csvname))
-            csv.drop_duplicates(keep=False, inplace=True)
+            csv.drop_duplicates(inplace=True)
             csv.to_csv(os.path.join(self.outpath, "data", self.csvname))
 
         else:
