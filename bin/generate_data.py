@@ -167,7 +167,7 @@ class DataConfig:
                             outcsv.writerow(row)
 
         rc = subprocess.call(
-            ["bash", tool, "bigwig", indir, outdir, "validation.csv", self.logfile])
+            ["bash", tool, "bigwig", indir, outdir, self.csvname, self.logfile])
         if rc != 0:
             logging.error("convert_files.sh could not convert files")
             raise Exception("convert_files.sh could not convert files")

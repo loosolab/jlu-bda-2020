@@ -34,6 +34,7 @@ validate_filetype () {
 	| "CHROMOSOME,START,END,NAME")
 		filetype="bed"
 		# calculate the index of the value column to properly cut into bedgraph
+		# since many files do not actually have the stated format internally
 		header=$(head -n 1 "$source_path/$1")
 		header=($header) #intentionally split at tab into array
 		cut_value=0
@@ -79,6 +80,7 @@ convert_file() {
 		fi
 		if [ "$file_extension" == "bedgraph" ]; then
 			newfile="$out_path/$file_name.$file_extension"
+			# fix for some bedgraphs not having proper format
 			if [ "$(head -1 "$newfile" | tr '\t' '\n' | wc -l)" == 6 ]; then
 				cut --fields 1-3,6 "$newfile" > "$6/tempfile"
 				mv "$6/tempfile" "$newfile"
@@ -194,4 +196,4 @@ $chromosome;$new_filename;$data_type;$filepath;$format;$remaining"\
 	if ! (( count % 5 )) ; then
 		echo "validated $count files"
 	fi
-done < <(tail --lines +2 "$source_path/$csv_name")
+done < <(tail --lines +2 "$source_path/validation.csv")
