@@ -169,7 +169,7 @@ class DataConfig:
         if rc != 0:
             logging.error("export_from_csv.r could not download data")
             raise Exception("export_from_csv.r could not download data")
-        logging.info("fXinished data download")
+        logging.info("finished data download")
         return True
 
     def validate_convert_files(self):
@@ -194,7 +194,7 @@ class DataConfig:
         indir = os.path.join(self.outpath, "data", "download")
         outdir = os.path.join(self.outpath, "data")
 
-        # create normalization.csv
+        # create validation.csv
         validation_csv = os.path.join(indir, "validation.csv")
         with open(validation_csv, 'w', newline='') as csvfile:
             outcsv = writer(csvfile, delimiter=';')

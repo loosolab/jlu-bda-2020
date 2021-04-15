@@ -64,6 +64,7 @@ do
 	mv "$sourcefile" "$file_path"
 	line="$experiment_id;$genome;$biosource;$technique;$epigenetic_mark;\
 $chromosome;$filename;$data_type;$file_path;$remaining"
+
 	# ensure that there are no double entries in the linking table
 	if ! grep -Fxq "$line" "$new_link"; then
 		echo "$line" >> "$new_link"
