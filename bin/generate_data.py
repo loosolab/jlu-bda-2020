@@ -253,7 +253,7 @@ class DataConfig:
 
         # Keep backup of the last validation file for debugging purposes
         # os.rename does not overwrite on Windows meaning a check is needed.
-        old_val = os.path.join(indir, "validaiton.csv.old")
+        old_val = os.path.join(indir, "validation.csv.old")
         try:
             os.rename(validation_csv, old_val)
         except OSError:
@@ -261,6 +261,8 @@ class DataConfig:
             os.rename(validation_csv, old_val)
 
         logging.info("finished file validation")
+        logging.info(
+            f"finished validation, the run can be found at {old_val}")
 
     def merge_forward_reverse(self):
         """
