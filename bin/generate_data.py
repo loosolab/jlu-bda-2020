@@ -103,7 +103,7 @@ class DataConfig:
                 self.outpath, "data", self.csvname), sep=';')
             csv.drop_duplicates(inplace=True)
             csv.to_csv(os.path.join(
-                self.outpath, "data", self.csvname), sep=';')
+                self.outpath, "data", self.csvname), sep=';', index=False)
 
         else:
             print(
