@@ -44,7 +44,7 @@ validate_filetype () {
 		done
 		;;
 	*)
-		echo "unrecognized file format, $1 can not be used"
+		echo "unrecognized file format, $1 can not be used" >> "$logfile"
 		return 2
 		;;
 	esac
@@ -89,14 +89,14 @@ convert_file() {
 			bedGraphToBigWig "$newfile" \
 				"$5/$4.chrom.sizes" "$out_path/$new_filename" &>/dev/null
 			if [ $? == 255 ]; then
-				echo "overlapping regions found"
+				echo "overlap found in $2" >> "$logfile"
 				bedRemoveOverlap "$newfile" "$6/tempfile"
 				mv "$6/tempfile" "$newfile"
 				bedGraphToBigWig "$newfile" \
 				"$5/$4.chrom.sizes" "$out_path/$new_filename"
 			fi
 		else
-				echo "unexpected file: $2 $file_extension" # TODO: proper error handling
+				echo "unexpected file: $2 $file_extension" >> "$logfile"
 		fi
 	fi
 }
@@ -117,7 +117,7 @@ merge_chunks() {
 		if [[ $file == *"chunk"* ]]; then
 			if [[ $outfile != $folder/$filename ]]; then
 				outfile="$folder/$filename"
-				# TODO: echo "outfile: $outfile" Logging
+				echo "chunks merged into: $outfile" >> "$logfile"
 				head -n1 "$file" > "$outfile"
 			fi
 			outfiles+=("$outfile")
@@ -139,6 +139,7 @@ source_path=$2
 out_path=$3/temp
 chrom_path=$3/chromsizes
 csv_name=$4
+logfile=$5
 
 new_link=$out_path/$csv_name
 touch "$new_link"
@@ -147,7 +148,7 @@ export new_filename=""
 # move chrom.sizes to proper folder
 mv "$source_path"/*.chrom.sizes "$chrom_path" &>/dev/null
 # Strip .txt ending of downloaded files
-rename '.txt' '' "$source_path"/*.txt &>/dev/null # TODO: error when doublequoting source_path/*
+rename '.txt' '' "$source_path"/*.txt &>/dev/null
 rename '.meta' '.meta.txt' "$source_path"/*.meta &>/dev/null
 
 #Merge atac-seq chunks

@@ -25,7 +25,7 @@ def setup(outpath):
     if not os.path.exists(chromsizes):
         os.makedirs(chromsizes)
 
-    logname = time + "_generate_data.log"
+    logname = time + "_tfanalyzer.log"
     logfile = os.path.join(logs, logname)
     logging.basicConfig(filename=logfile, level=logging.INFO)
     return logfile

@@ -6,7 +6,6 @@ from scripts.merge_reads import merge_all
 from scripts.generate_pickle import parse
 from scripts.normalize_signal_values import normalize_all
 from scripts.setup_logging import setup
-# //TODO: angular insall in visualisation folder
 
 
 class DataConfig:
@@ -127,7 +126,7 @@ class DataConfig:
         outdir = os.path.join(self.outpath, "data")
 
         rc = subprocess.call(
-            ["bash", tool, "bigwig", indir, outdir, self.csvname])
+            ["bash", tool, "bigwig", indir, outdir, self.csvname, self.logfile])
         if rc != 0:
             logging.error("convert_files.sh could not convert files")
             raise Exception("convert_files.sh could not convert files")
