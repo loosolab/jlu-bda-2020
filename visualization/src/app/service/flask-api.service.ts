@@ -17,12 +17,13 @@ export class FlaskApiService {
   public Tree_Data: BehaviorSubject<TFItemNode[]> = new BehaviorSubject<TFItemNode[]>([])
   public Viszalization_Data = new BehaviorSubject(Array)
   public RawGraphData = new BehaviorSubject(Array)
+  private api_adress = "ttp://localhost:5000/"
   constructor() { }
 
   getTreeDataFromAPI() {
     return new Promise(resolve => {
       var rawFile = new XMLHttpRequest();
-      rawFile.open("GET", "http://localhost:5000/getTreeData", false)
+      rawFile.open("GET", this.api_adress+"getTreeData", false)
       rawFile.onload = function () {
         var res = rawFile.response
         var resolvedJSON = JSON.parse(res)
@@ -45,7 +46,7 @@ export class FlaskApiService {
   getPathList(){
     return new Promise(resolve => {
       var xmlhttp = new XMLHttpRequest();
-      xmlhttp.open("POST", "http://localhost:5000/getGraphPaths")
+      xmlhttp.open("POST", this.api_adress + "getGraphPaths")
       xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8")
       xmlhttp.send(JSON.stringify(this.Tree_Data.value))
       xmlhttp.onload = function () {
@@ -68,7 +69,7 @@ export class FlaskApiService {
   getRawData(){
     return new Promise(resolve => {
       var xmlhttp = new XMLHttpRequest();
-      xmlhttp.open("POST", "http://localhost:5000/getRawData")
+      xmlhttp.open("POST", this.api_adress +"getRawData")
       xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8")
       xmlhttp.send(JSON.stringify(this.Tree_Data.value))
       xmlhttp.onload = function () {
