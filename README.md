@@ -6,7 +6,7 @@ Transcription factors are well-known for their important role in regulating gene
 
 To this end, the TF Analyzer utilizes the [Deepblue Epigenomic Data Server](https://deepblue.mpi-inf.mpg.de/), which currently stores close to 40,000 ChIP-seq and roughly 3,800 DNase-seq experiments, to link corresponding DNA binding site and accessiblity experiments by their shared biosources (i.e. cell types). The downloaded files are normalized by means of both logarithmic and min/max scaling and individual scores are calculated for each transcription factor. The results are displayed as charts through a user-friendly web interface (see [Example case](#example-case)).
 
-The latest working build can be cloned from the `dev` branch.
+The latest working build can be cloned from the `main` branch.
 
 For further information on how this tool works, please check out our [wiki](https://github.com/loosolab/jlu-bda-2020/wiki/).
 If you encounter any errors during a run, please refer to the "[Problems and Solutions](https://github.com/loosolab/jlu-bda-2020/wiki/Problems-and-Solutions)" section of the wiki before opening an Issue.
