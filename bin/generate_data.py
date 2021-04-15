@@ -110,7 +110,7 @@ class DataConfig:
         if rc != 0:
             logging.error("export_from_csv.r could not download data")
             raise Exception("export_from_csv.r could not download data")
-        logging.info("finished data download")
+        logging.info("fXinished data download")
         return True
 
     def validate_convert_files(self):
@@ -125,11 +125,62 @@ class DataConfig:
         indir = os.path.join(self.outpath, "data", "download")
         outdir = os.path.join(self.outpath, "data")
 
+        validation_csv = os.path.join(indir, "validation.csv")
+        with open(validation_csv, 'w', newline='') as csvfile:
+            outcsv = writer(csvfile, delimiter=';')
+            found_biosources = []
+            found_genomes = []
+            found_chromosomes = []
+            with open(os.path.join(indir, self.csvname), 'r') as csv:
+                csv_reader = reader(csv, delimiter=';')
+                header = next(csv_reader)
+                outcsv.writerow(header)
+                genome = header.index("genome")
+                biosource = header.index("biosource")
+                chromosome = header.index("chromosome")
+                tf = header.index("epigenetic_mark")
+                technique = header.index("technique")
+                # find every chipseq that ifts the params and note
+                # which combinations have been found.
+                for row in csv_reader:
+                    if (row[genome] in self.genome and
+                            row[biosource] in self.biosource and
+                            row[tf] in self.epigenetic_mark and
+                            row[chromosome] in self.chromosome):
+
+                        if row[genome] not in found_genomes:
+                            found_genomes.append(row[genome])
+                        if row[biosource] not in found_biosources:
+                            found_biosources.append(row[biosource])
+                        if row[chromosome] not in found_chromosomes:
+                            found_chromosomes.append(row[chromosome])
+                        outcsv.writerow(row)
+                # go through the file again and check if atac/dnase
+                # files fitting are found
+                # reset the csv reader before doing so
+                csv.seek(0)
+                for row in csv_reader:
+                    if row[technique] in ["atac-seq", "dnase-seq"]:
+                        if (row[genome] in self.genome and
+                                row[biosource] in self.biosource and
+                                row[chromosome] in self.chromosome):
+                            outcsv.writerow(row)
+
         rc = subprocess.call(
-            ["bash", tool, "bigwig", indir, outdir, self.csvname, self.logfile])
+            ["bash", tool, "bigwig", indir, outdir, "validation.csv", self.logfile])
         if rc != 0:
             logging.error("convert_files.sh could not convert files")
             raise Exception("convert_files.sh could not convert files")
+
+        # Keep backup of the last validation file for debugging purposes
+        # os.rename does not overwrite on Windows meaning a check is needed.
+        old_val = os.path.join(indir, "validaiton.csv.old")
+        try:
+            os.rename(validation_csv, old_val)
+        except OSError:
+            os.remove(old_val)
+            os.rename(validation_csv, old_val)
+
         logging.info("finished file validation")
 
     def merge_forward_reverse(self):
