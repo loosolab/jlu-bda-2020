@@ -99,9 +99,11 @@ class DataConfig:
 
             # This code should not be needed, but somehow somewhere duplicate
             # entries can be added to the linking table...somehow
-            csv = pd.read_csv(os.path.join(self.outpath, "data", self.csvname))
+            csv = pd.read_csv(os.path.join(
+                self.outpath, "data", self.csvname), sep=';')
             csv.drop_duplicates(inplace=True)
-            csv.to_csv(os.path.join(self.outpath, "data", self.csvname))
+            csv.to_csv(os.path.join(
+                self.outpath, "data", self.csvname), sep=';')
 
         else:
             print(
