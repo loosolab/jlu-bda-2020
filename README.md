@@ -102,8 +102,6 @@ with these arguments:
 
 `-o, --output_path` output directory for all data (default: `./`)
 
-`-r, --redo_analysis` existing results will be executed again and overwritten
-
 `--offline` runs the program in offline mode (will not query or download data from Deepblue)
 
 `--redo_file_validation` downloaded files will be validated and sorted again (even if no new files were downloaded)
