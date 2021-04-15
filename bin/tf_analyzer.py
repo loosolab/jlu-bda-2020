@@ -102,7 +102,7 @@ def main():
 
     try:
         lt = pd.read_csv(
-            os.path.join(args.output_path, 'data', 'linking_table.csv'),
+            os.path.join(args.output_path, 'data', 'download', 'linking_table.csv'),
             sep=';', usecols=['genome', 'epigenetic_mark', 'biosource', 'chromosome'])
         lt.drop(lt[lt['epigenetic_mark'] == ('dnasei' or 'dna accessibility')].index, inplace=True)
     except FileNotFoundError:
