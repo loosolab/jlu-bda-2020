@@ -58,6 +58,7 @@ validate_filetype () {
 		done
 
 		if [ $cut_value == 0 ]; then
+			echo "INFO:root:no SIGNAL_VALUE, $1 can not be used" >> "$logfile"
 			return 2
 		fi
 		;;
